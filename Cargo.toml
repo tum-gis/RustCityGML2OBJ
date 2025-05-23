@@ -1,0 +1,13 @@
+[package]
+name = "RustCityGML2OBJ"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ecitygml = "0.0.1-alpha.4"
+ecitygml-io = "0.0.1-alpha.4"
+ecitygml-transform = "0.0.1-alpha.4"
+rayon = "1.10.0"
+egml = "0.0.1-alpha.5"
+ecitygml-core = "0.0.1-alpha.4"
+earcut = "0.4.4"
