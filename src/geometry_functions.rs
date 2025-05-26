@@ -4,7 +4,6 @@ use earcut::utils3d::project3d_to_2d;
 use ecitygml_core::model::building::Building;
 use egml::model::geometry::Polygon;
 use egml::operations::geometry::Geometry;
-use crate::TBW;
 
 // This function is used to calculate the translation parameters for a single building
 pub fn get_building_wise_translation_parameters(
@@ -34,17 +33,14 @@ pub fn translate_points() {}
 
 pub fn triangulate(
     input_polygon: &Polygon,
-    dx: Option<f64>,
-    dy: Option<f64>,
-    dz: Option<f64>,
-) -> (Vec<u32>, Vec<[f64; 3]>) {
+    ) -> (Vec<u32>, Vec<[f64; 3]>) {
     // Predefine vectors for the points
     let mut all_points: Vec<[f64; 3]> = Vec::new();
 
     // Exterior ring
     let exterior_ring = &input_polygon.exterior;
     let length_of_exterior_ring = exterior_ring.points().len();
-    
+
     // Append all the points to the pre defined vector
     for point in exterior_ring.points() {
         all_points.push([point.x(), point.y(), point.z()]);
@@ -54,17 +50,6 @@ pub fn triangulate(
     for interior_ring in &input_polygon.interior {
         for point in interior_ring.points() {
             all_points.push([point.x(), point.y(), point.z()]);
-        }
-    }
-    
-    // Perform the translation into a local coordinate system if necessary
-    if TBW{
-        if let (Some(dx), Some(dy), Some(dz)) = (dx, dy, dz) {
-            for point in &mut all_points {
-                point[0] -= dx;
-                point[1] -= dy;
-                point[2] -= dz;
-            }
         }
     }
 

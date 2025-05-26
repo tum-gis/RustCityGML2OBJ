@@ -13,6 +13,7 @@ dependencies = [
  "ecitygml-io",
  "ecitygml-transform",
  "egml",
+ "nalgebra",
  "rayon",
 ]
 

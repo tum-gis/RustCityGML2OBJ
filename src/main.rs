@@ -3,6 +3,7 @@ mod geometry_functions;
 mod translation_module;
 mod write_functions;
 use clap::Parser;
+use ecitygml_core::model::building::Building;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -24,7 +25,6 @@ struct Args {
 //static INPUT_DIR: &'static str =
 //    "/home/thomas/CityGML2OBJTestfolder/CityGML_3_files/citygml3_tile_for_testing/694_5334__v3.gml";
 //static OUTPUT_DIR: &'static str = "/home/thomas/CityGML2OBJTestfolder/output";
-static TBW: bool = false;
 
 fn main() {
     let args = Args::parse();
@@ -33,16 +33,14 @@ fn main() {
     let overall_reader = ecitygml_io::CitygmlReader::from_path(args.input.clone());
 
     match overall_reader.unwrap().finish() {
-        Ok(data) => {
-            // take care of the buildings
-            let all_buildings = &data.building;
+        Ok(mut data) => {
+            let all_buildings = &mut data.building;
             for building in all_buildings {
-                conversion_functions::process_building_components(&building)
+                conversion_functions::process_building_components(building, args.tbw);
             }
-            // todo: this has to be augmented to other semantic objects besides buildings
         }
         Err(e) => {
-            eprintln!("Error: {}", e);
+            eprintln!("Error reading data: {:?}", e);
         }
     }
 }
