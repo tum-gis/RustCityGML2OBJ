@@ -3,7 +3,9 @@ mod geometry_functions;
 mod translation_module;
 mod write_functions;
 use clap::Parser;
-use rayon::prelude::*; 
+use rayon::prelude::*;
+use std::fs;
+use std::path::Path;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -30,20 +32,38 @@ fn main() {
     let args = Args::parse();
     println!("Input Directory: {}", args.input);
     println!("Output Directory: {}", args.output);
-    let overall_reader = ecitygml_io::CitygmlReader::from_path(args.input.clone());
 
-    match overall_reader.unwrap().finish() {
-        Ok(mut data) => {
-            let all_buildings = &mut data.building;
+    // Read directory entries
+    let input_path = Path::new(&args.input);
+    let entries = fs::read_dir(input_path).expect("Could not read input directory");
 
-            all_buildings
-                .par_iter_mut()
-                .for_each(|building| {
-                    conversion_functions::process_building_components(building, args.tbw);
-                });
-        }
-        Err(e) => {
-            eprintln!("Error reading data: {:?}", e);
+    // Filter and process each matching file
+    for entry in entries.flatten() {
+        let path = entry.path();
+
+        // Check if the file ends with a valid extension
+        if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+            let ext = ext.to_lowercase();
+            if ext == "gml" || ext == "xml" {
+                println!("Processing file: {}", path.display());
+
+                let reader_result = ecitygml_io::CitygmlReader::from_path(&path);
+
+                match reader_result.unwrap().finish() {
+                    Ok(mut data) => {
+                        let all_buildings = &mut data.building;
+
+                        all_buildings.par_iter_mut().for_each(|building| {
+                            conversion_functions::process_building_components(building, args.tbw);
+                        });
+                    }
+                    Err(e) => {
+                        eprintln!("Error reading file {}: {:?}", path.display(), e);
+                    }
+                }
+            }
         }
     }
 }
+
+
