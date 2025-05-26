@@ -1,9 +1,9 @@
-use crate::OUTPUT_DIR;
+use crate::Args;
 use egml::model::base::Id;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
-
+use clap::Parser;
 
 pub fn write_obj_file(
     input_points: Vec<[f64; 3]>,
@@ -11,11 +11,12 @@ pub fn write_obj_file(
     building_id: &Id,
     semantic_surface_id: &Id,
 ) {
+    let args = Args::parse();
     let building_id_string = building_id.to_string();
     let semantic_surface_string = semantic_surface_id.to_string();
     let filename = format!("{}___{}.obj", building_id_string, semantic_surface_string);
 
-    let file_path = Path::new(OUTPUT_DIR).join(filename);
+    let file_path = Path::new(&args.output).join(filename);
 
     let file = match File::create(&file_path) {
         Ok(f) => f,

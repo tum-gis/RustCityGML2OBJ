@@ -1,20 +1,39 @@
 mod conversion_functions;
 mod geometry_functions;
-mod write_functions;
 mod translation_module;
+mod write_functions;
+use clap::Parser;
 
-static INPUT_DIR: &'static str = "/home/thomas/CityGML2OBJTestfolder/CityGML_3_files/citygml3_tile_for_testing/694_5334__v3.gml";
-static OUTPUT_DIR: &'static str = "/home/thomas/CityGML2OBJTestfolder/output";
-static TBW : bool = false;
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Input file path
+    #[arg(short, long)]
+    input: String,
+
+    /// Output directory
+    #[arg(short, long)]
+    output: String,
+
+    /// Some boolean flag (like TBW)
+    #[arg(long, default_value_t = false)]
+    tbw: bool,
+}
+
+
+//static INPUT_DIR: &'static str =
+//    "/home/thomas/CityGML2OBJTestfolder/CityGML_3_files/citygml3_tile_for_testing/694_5334__v3.gml";
+//static OUTPUT_DIR: &'static str = "/home/thomas/CityGML2OBJTestfolder/output";
+static TBW: bool = false;
 
 fn main() {
-    println!("Input Directory: {}", INPUT_DIR);
-    println!("Output Directory: {}", OUTPUT_DIR);
-    let overall_reader = ecitygml_io::CitygmlReader::from_path(INPUT_DIR);
+    let args = Args::parse();
+    println!("Input Directory: {}", args.input);
+    println!("Output Directory: {}", args.output);
+    let overall_reader = ecitygml_io::CitygmlReader::from_path(args.input.clone());
 
     match overall_reader.unwrap().finish() {
         Ok(data) => {
-
             // take care of the buildings
             let all_buildings = &data.building;
             for building in all_buildings {
