@@ -1,6 +1,5 @@
 # :cityscape: RustCityGML2OBJ :cityscape:
-Command line converter of **CityGML (.gml)** to **OBJ (.obj)** files, while maintaining the semantics 
-
+Command line converter of **CityGML (.gml)** to **OBJ (.obj)** files. This project is at an early stage and is currently being further developed.
 ## :arrow_forward: How to run?
 
   `--input  your-input-citygml-path-here` 
@@ -25,15 +24,16 @@ Please make sure to use the absolute paths to the respective directories.
 
 #### Mandatory:
 
-+ CityGML 3.0
++ CityGML 3.0 (In case you have an older CityGML version, you can e.g. use the [citygml-tools](https://github.com/citygml4j/citygml-tools) to upgrade your files)
 + Files must end with `.gml`, `.GML`, `.xml`, or `.XML`
-+ Your files must be valid (e.g., free check with [CityDoctor](https://transfer.hft-stuttgart.de/gitlab/citydoctor/citydoctor2)
++ Your files must be valid (e.g., free check with [CityDoctor](https://transfer.hft-stuttgart.de/gitlab/citydoctor/citydoctor2))
  
 ## Limitations
 
-+ Only Buildings are supported
++ Only Buildings are supported.
 + CityGML 1.0 and 2.0 are not supported
-+ Only RoofSurfaces, WallSurfaces, GroundSurfaces, WindowSurfaces and DoorSurfaces are currently suppported
++ Only RoofSurfaces, WallSurfaces, GroundSurfaces, WindowSurfaces and DoorSurfaces are currently suppported.
++ Building Installations are not supportes
 + Implicit geometry is not Supported
 
 
