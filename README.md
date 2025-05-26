@@ -2,7 +2,6 @@
 Command line converter of **CityGML (.gml)** to **OBJ (.obj)** files, while maintaining the semantics 
 
 ## :arrow_forward: How to run?
-The `CityGML2OBJs.py` represents the starting point of the code, choose this file when configuring the runtime and pass the following parameters:
 
   `--input  your-input-citygml-path-here` 
   
@@ -10,11 +9,16 @@ The `CityGML2OBJs.py` represents the starting point of the code, choose this fil
 
 Please make sure to use the absolute paths to the respective directories.
 
+### :wrench: Detailed Project Description
++ Every building will be converted into a set of `.obj` files
++ Every polygon will be triangulated with the [earcut Rust-library](https://github.com/ciscorn/earcut-rs) and will be written into an individual `.obj`
++ Every `.obj` files adheres to the following naming convention: `<gml_id-of-the-building>__<gml_id_of the polygon>.obj`
+
 ### :wrench: Optional features
 
 | Optional feature | specification |
 | -------- | -------- |
-| Building-wise translation into local CRS |`--tbw`|
+| Building-wise translation into local CRS before the triangulation |`--tbw`|
 
 
 ### CityGML Requirements:
@@ -27,9 +31,11 @@ Please make sure to use the absolute paths to the respective directories.
  
 ## Limitations
 
++ Only Buildings are supported
 + CityGML 1.0 and 2.0 are not supported
-+ Building Furniture is not supported
-+ 
++ Only RoofSurfaces, WallSurfaces, GroundSurfaces, WindowSurfaces and DoorSurfaces are currently suppported
++ Implicit geometry is not Supported
+
 
 ## :mailbox: Contact & Feedback
 
