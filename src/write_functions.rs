@@ -1,11 +1,11 @@
 use crate::Args;
+use clap::Parser;
 use egml::model::base::Id;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
-use clap::Parser;
 
-pub fn write_json_mapping_file(){
+pub fn write_json_mapping_file() {
     // todo: muss noch implementiert werden
 }
 
