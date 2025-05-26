@@ -10,6 +10,7 @@ use egml::model::geometry::{MultiSurface, Polygon};
 use nalgebra::UnitQuaternion;
 use nalgebra::base::Vector3;
 use nalgebra::geometry::Isometry3;
+use rayon::prelude::*;
 
 pub fn process_building_components(input_building: &mut Building, tbw: bool) {
     // get the translation parameter into a local crs in case it is desired
@@ -39,24 +40,26 @@ pub fn process_building_components(input_building: &mut Building, tbw: bool) {
     // Obtain the building id
     let building_id = &input_building.city_object.gml.id;
 
-    // Take care of the wall surfaces, first
+    // Wall surfaces
+    let building_id_for_walls = building_id.clone();
     let all_wall_surface = &input_building.wall_surface;
-    for wall_surface in all_wall_surface {
-        // get the wall surface id
-        process_wall_surface(wall_surface, building_id);
-    }
+    all_wall_surface.par_iter().for_each(|wall_surface| {
+        process_wall_surface(wall_surface, &building_id_for_walls );
+    });
 
-    // Take care of the Roof Surfaces
+    // Roof surfaces
+    let building_id_for_roofs = building_id.clone();
     let all_roof_surface = &input_building.roof_surface;
-    for roof_surface in all_roof_surface {
-        process_roof_surface(roof_surface, building_id);
-    }
+    all_roof_surface.par_iter().for_each(|roof_surface| {
+        process_roof_surface(roof_surface, &building_id_for_roofs);
+    });
 
-    // Take care of the Ground Surfaces
+    // Ground surfaces
+    let building_id_for_grounds = building_id.clone();
     let all_ground_surface = &input_building.ground_surface;
-    for ground_surface in all_ground_surface {
-        process_ground_surface(ground_surface, building_id);
-    }
+    all_ground_surface.par_iter().for_each(|ground_surface| {
+        process_ground_surface(ground_surface, &building_id_for_grounds);
+    });
 }
 
 pub fn process_wall_surface(input_wall_surface: &WallSurface, building_id: &Id) {
@@ -65,7 +68,7 @@ pub fn process_wall_surface(input_wall_surface: &WallSurface, building_id: &Id) 
     if let Some(multi_surface) = multi_surfaces {
         // get the id of the multi surface
         let multi_surfaces_id = &multi_surface.gml.id;
-        process_multi_surface(&multi_surface, building_id, multi_surfaces_id,false)
+        process_multi_surface(&multi_surface, building_id, multi_surfaces_id, false)
     }
     // Consider the window surfaces
     let window_surfaces = &input_wall_surface.window_surface;
@@ -126,7 +129,12 @@ pub fn process_multi_surface(
 ) {
     let surface_members = input_multi_surface.surface_member();
     for surface_member in surface_members {
-        process_surface_member(&surface_member, building_id, multi_surface_id, processing_windows);
+        process_surface_member(
+            &surface_member,
+            building_id,
+            multi_surface_id,
+            processing_windows,
+        );
     }
 }
 
@@ -136,18 +144,13 @@ pub fn process_surface_member(
     multi_surface_id: &Id,
     process_with_poly_id: bool,
 ) {
-        
     // Perform the triangulation.
     let (triangles, all_points) = triangulate(input_surface_member);
     let input_surface_member_id = &input_surface_member.gml.id;
     if process_with_poly_id {
-        
         write_obj_file(all_points, triangles, building_id, input_surface_member_id);
-    }
-    else{
+    } else {
         // todo: Write the results to obj-format
         write_obj_file(all_points, triangles, building_id, input_surface_member_id);
     }
 }
-
-    

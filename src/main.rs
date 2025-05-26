@@ -3,7 +3,7 @@ mod geometry_functions;
 mod translation_module;
 mod write_functions;
 use clap::Parser;
-use ecitygml_core::model::building::Building;
+use rayon::prelude::*; 
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -35,9 +35,12 @@ fn main() {
     match overall_reader.unwrap().finish() {
         Ok(mut data) => {
             let all_buildings = &mut data.building;
-            for building in all_buildings {
-                conversion_functions::process_building_components(building, args.tbw);
-            }
+
+            all_buildings
+                .par_iter_mut()
+                .for_each(|building| {
+                    conversion_functions::process_building_components(building, args.tbw);
+                });
         }
         Err(e) => {
             eprintln!("Error reading data: {:?}", e);
