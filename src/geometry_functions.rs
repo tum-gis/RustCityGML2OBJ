@@ -4,6 +4,7 @@ use earcut::utils3d::project3d_to_2d;
 use ecitygml_core::model::building::Building;
 use egml::model::geometry::Polygon;
 use egml::operations::geometry::Geometry;
+use egml::model::base::Id;
 
 // This function is used to calculate the translation parameters for a single building
 pub fn get_building_wise_translation_parameters(
@@ -74,4 +75,8 @@ pub fn triangulate(input_polygon: &Polygon) -> (Vec<u32>, Vec<[f64; 3]>) {
     );
 
     (triangles, all_points)
+}
+
+pub fn write_json_file(building_id: &Id, component_id: &Id, crs_info: &str, translation_parameters: (f64, f64, f64)){
+    
 }

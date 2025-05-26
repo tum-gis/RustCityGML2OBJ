@@ -12,7 +12,12 @@ use nalgebra::base::Vector3;
 use nalgebra::geometry::Isometry3;
 use rayon::prelude::*;
 
-pub fn process_building_components(input_building: &mut Building, tbw: bool) {
+pub fn process_building_components(
+    input_building: &mut Building,
+    tbw: bool,
+    addBB: bool,
+    addJSON: bool,
+) {
     // get the translation parameter into a local crs in case it is desired
     let mut dx: f64 = 0.0;
     let mut dy: f64 = 0.0;
@@ -44,80 +49,150 @@ pub fn process_building_components(input_building: &mut Building, tbw: bool) {
     let building_id_for_walls = building_id.clone();
     let all_wall_surface = &input_building.wall_surface;
     all_wall_surface.par_iter().for_each(|wall_surface| {
-        process_wall_surface(wall_surface, &building_id_for_walls );
+        process_wall_surface(wall_surface, &building_id_for_walls, addBB, addJSON);
     });
 
     // Roof surfaces
     let building_id_for_roofs = building_id.clone();
     let all_roof_surface = &input_building.roof_surface;
     all_roof_surface.par_iter().for_each(|roof_surface| {
-        process_roof_surface(roof_surface, &building_id_for_roofs);
+        process_roof_surface(roof_surface, &building_id_for_roofs, addBB, addJSON);
     });
 
     // Ground surfaces
     let building_id_for_grounds = building_id.clone();
     let all_ground_surface = &input_building.ground_surface;
     all_ground_surface.par_iter().for_each(|ground_surface| {
-        process_ground_surface(ground_surface, &building_id_for_grounds);
+        process_ground_surface(ground_surface, &building_id_for_grounds, addBB, addJSON);
     });
 }
 
-pub fn process_wall_surface(input_wall_surface: &WallSurface, building_id: &Id) {
+pub fn process_wall_surface(
+    input_wall_surface: &WallSurface,
+    building_id: &Id,
+    addBB: bool,
+    addJSON: bool,
+) {
+    let thematic_info = "WallSurface";
     // Consider the thematic surfaces
     let multi_surfaces = &input_wall_surface.thematic_surface.lod3_multi_surface;
     if let Some(multi_surface) = multi_surfaces {
         // get the id of the multi surface
         let multi_surfaces_id = &multi_surface.gml.id;
-        process_multi_surface(&multi_surface, building_id, multi_surfaces_id, false)
+        process_multi_surface(
+            &multi_surface,
+            building_id,
+            multi_surfaces_id,
+            thematic_info,
+            false,
+            addBB,
+            addJSON,
+        )
     }
     // Consider the window surfaces
     let window_surfaces = &input_wall_surface.window_surface;
     for window_surface in window_surfaces {
-        process_window_surface(window_surface, building_id);
+        process_window_surface(window_surface, building_id, addBB, addJSON);
     }
 
     // Consider the door surfaces
     let door_surfaces = &input_wall_surface.door_surface;
     for door_surface in door_surfaces {
-        process_door_surface(door_surface, building_id);
+        process_door_surface(door_surface, building_id, addBB, addJSON);
     }
 }
 
-pub fn process_window_surface(input_window_surface: &WindowSurface, building_id: &Id) {
+pub fn process_window_surface(
+    input_window_surface: &WindowSurface,
+    building_id: &Id,
+    addBB: bool,
+    addJSON: bool,
+) {
+    let thematic_info = "WindowSurface";
     let occupied_space = &input_window_surface.occupied_space;
     //let window_id = &occupied_space.space.city_object.gml.id;
     let space = &occupied_space.space;
     for multi_surface in &space.lod3_multi_surface {
         let window_id = &multi_surface.gml.id;
-        process_multi_surface(&multi_surface, building_id, &window_id, true);
+        process_multi_surface(
+            &multi_surface,
+            building_id,
+            &window_id,
+            thematic_info,
+            true,
+            addBB,
+            addJSON,
+        );
     }
 }
 
-pub fn process_door_surface(input_door_surface: &DoorSurface, building_id: &Id) {
+pub fn process_door_surface(
+    input_door_surface: &DoorSurface,
+    building_id: &Id,
+    addBB: bool,
+    addJSON: bool,
+) {
+    let thematic_info = "DoorSurface";
     let occupied_space = &input_door_surface.occupied_space;
     //let window_id = &occupied_space.space.city_object.gml.id;
     let space = &occupied_space.space;
     for multi_surface in &space.lod3_multi_surface {
         let window_id = &multi_surface.gml.id;
-        process_multi_surface(&multi_surface, building_id, &window_id, true);
+        process_multi_surface(
+            &multi_surface,
+            building_id,
+            &window_id,
+            thematic_info,
+            true,
+            addBB,
+            addJSON,
+        );
     }
 }
 
-pub fn process_roof_surface(input_roof_surface: &RoofSurface, building_id: &Id) {
+pub fn process_roof_surface(
+    input_roof_surface: &RoofSurface,
+    building_id: &Id,
+    addBB: bool,
+    addJSON: bool,
+) {
+    let thematic_info = "RoofSurface";
     let multi_surfaces = &input_roof_surface.thematic_surface.lod3_multi_surface;
     if let Some(multi_surface) = multi_surfaces {
         // get the id of the multi surface
         let multi_surfaces_id = &multi_surface.gml.id;
-        process_multi_surface(&multi_surface, building_id, multi_surfaces_id, false)
+        process_multi_surface(
+            &multi_surface,
+            building_id,
+            multi_surfaces_id,
+            thematic_info,
+            false,
+            addBB,
+            addJSON,
+        )
     }
 }
 
-pub fn process_ground_surface(input_ground_surface: &GroundSurface, building_id: &Id) {
+pub fn process_ground_surface(
+    input_ground_surface: &GroundSurface,
+    building_id: &Id,
+    addBB: bool,
+    addJSON: bool,
+) {
+    let thematic_info = "GroundSurface";
     let multi_surfaces = &input_ground_surface.thematic_surface.lod3_multi_surface;
     if let Some(multi_surface) = multi_surfaces {
         // get the id of the multi surface
         let multi_surfaces_id = &multi_surface.gml.id;
-        process_multi_surface(&multi_surface, building_id, multi_surfaces_id, false)
+        process_multi_surface(
+            &multi_surface,
+            building_id,
+            multi_surfaces_id,
+            thematic_info,
+            false,
+            addBB,
+            addJSON,
+        )
     }
 }
 
@@ -125,7 +200,10 @@ pub fn process_multi_surface(
     input_multi_surface: &MultiSurface,
     building_id: &Id,
     multi_surface_id: &Id,
+    thematic_info: &str,
     processing_windows: bool,
+    addBB: bool,
+    addJSON: bool,
 ) {
     let surface_members = input_multi_surface.surface_member();
     for surface_member in surface_members {
@@ -133,7 +211,10 @@ pub fn process_multi_surface(
             &surface_member,
             building_id,
             multi_surface_id,
+            thematic_info,
             processing_windows,
+            addBB,
+            addJSON,
         );
     }
 }
@@ -142,7 +223,10 @@ pub fn process_surface_member(
     input_surface_member: &Polygon,
     building_id: &Id,
     multi_surface_id: &Id,
+    thematic_info: &str,
     process_with_poly_id: bool,
+    addBB: bool,
+    addJSON: bool,
 ) {
     // Perform the triangulation.
     let (triangles, all_points) = triangulate(input_surface_member);
@@ -152,5 +236,13 @@ pub fn process_surface_member(
     } else {
         // todo: Write the results to obj-format
         write_obj_file(all_points, triangles, building_id, input_surface_member_id);
+    }
+
+    if addBB {
+        // todo: add functionality to add the bounding box
+    }
+
+    if addJSON {
+        // todo: add functionality to add the json file
     }
 }

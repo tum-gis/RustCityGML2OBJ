@@ -18,11 +18,18 @@ struct Args {
     #[arg(short, long)]
     output: String,
 
-    /// Some boolean flag (like TBW)
+    /// Option for invoking building-wise translation into local CRS
     #[arg(long, default_value_t = false)]
     tbw: bool,
-}
 
+    /// Some boolean flag (like TBW)
+    #[arg(long, default_value_t = false)]
+    addJSON: bool,
+
+    /// Some boolean flag (like TBW)
+    #[arg(long, default_value_t = false)]
+    addBB: bool,
+}
 
 //static INPUT_DIR: &'static str =
 //    "/home/thomas/CityGML2OBJTestfolder/CityGML_3_files/citygml3_tile_for_testing/694_5334__v3.gml";
@@ -54,7 +61,7 @@ fn main() {
                         let all_buildings = &mut data.building;
 
                         all_buildings.par_iter_mut().for_each(|building| {
-                            conversion_functions::process_building_components(building, args.tbw);
+                            conversion_functions::process_building_components(building, args.tbw, args.addBB, args.addJSON);
                         });
                     }
                     Err(e) => {
@@ -65,5 +72,3 @@ fn main() {
         }
     }
 }
-
-
