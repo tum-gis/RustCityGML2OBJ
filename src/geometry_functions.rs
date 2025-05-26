@@ -29,19 +29,12 @@ pub fn get_building_wise_translation_parameters(
     Some((sum_x / count, sum_y / count, sum_z / count))
 }
 
-pub fn translate_points() {}
-
-pub fn triangulate(
-    input_polygon: &Polygon,
-    ) -> (Vec<u32>, Vec<[f64; 3]>) {
-    // Predefine vectors for the points
+pub fn triangulate(input_polygon: &Polygon) -> (Vec<u32>, Vec<[f64; 3]>) {
+    // Collect all 3D points
     let mut all_points: Vec<[f64; 3]> = Vec::new();
 
     // Exterior ring
     let exterior_ring = &input_polygon.exterior;
-    let length_of_exterior_ring = exterior_ring.points().len();
-
-    // Append all the points to the pre defined vector
     for point in exterior_ring.points() {
         all_points.push([point.x(), point.y(), point.z()]);
     }
@@ -53,21 +46,21 @@ pub fn triangulate(
         }
     }
 
-    // Project 3D to 2D
+    // Project to 2D
     let mut all_points_projected: Vec<[f64; 2]> = Vec::new();
     let _ = project3d_to_2d(
         &all_points,
-        length_of_exterior_ring,
+        exterior_ring.points().len(),
         &mut all_points_projected,
     );
 
-    // Prepare hole indices only if there are any interior rings
+    // Build hole indices (start index of each hole ring in the flattened point list)
     let mut hole_indices: Vec<u32> = Vec::new();
     if !input_polygon.interior.is_empty() {
         let mut offset = exterior_ring.points().len() as u32;
-        for ring in &input_polygon.interior[..input_polygon.interior.len().saturating_sub(1)] {
-            offset += ring.points().len() as u32;
+        for ring in &input_polygon.interior {
             hole_indices.push(offset);
+            offset += ring.points().len() as u32;
         }
     }
 
@@ -80,5 +73,5 @@ pub fn triangulate(
         &mut triangles,
     );
 
-    return (triangles, all_points);
+    (triangles, all_points)
 }

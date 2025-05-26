@@ -1,7 +1,9 @@
 use crate::geometry_functions::triangulate;
 use crate::write_functions::write_obj_file;
 pub use ecitygml::model::building::Building;
-pub use ecitygml_core::model::construction::{GroundSurface, RoofSurface, WallSurface};
+pub use ecitygml_core::model::construction::{
+    DoorSurface, GroundSurface, RoofSurface, WallSurface, WindowSurface,
+};
 use ecitygml_core::operations::FeatureWithGeometry;
 use egml::model::base::Id;
 use egml::model::geometry::{MultiSurface, Polygon};
@@ -36,6 +38,7 @@ pub fn process_building_components(input_building: &mut Building, tbw: bool) {
 
     // Obtain the building id
     let building_id = &input_building.city_object.gml.id;
+
     // Take care of the wall surfaces, first
     let all_wall_surface = &input_building.wall_surface;
     for wall_surface in all_wall_surface {
@@ -57,16 +60,43 @@ pub fn process_building_components(input_building: &mut Building, tbw: bool) {
 }
 
 pub fn process_wall_surface(input_wall_surface: &WallSurface, building_id: &Id) {
-    let multi_surfaces = &input_wall_surface.thematic_surface.lod2_multi_surface;
+    // Consider the thematic surfaces
+    let multi_surfaces = &input_wall_surface.thematic_surface.lod3_multi_surface;
     if let Some(multi_surface) = multi_surfaces {
         // get the id of the multi surface
         let multi_surfaces_id = &multi_surface.gml.id;
         process_multi_surface(&multi_surface, building_id, multi_surfaces_id)
     }
+    // Consider the window surfaces
+    let window_surfaces = &input_wall_surface.window_surface;
+    for window_surface in window_surfaces {
+        process_window_surface(window_surface, building_id);
+    }
+
+    // Consider the door surfaces
+    let door_surfaces = &input_wall_surface.door_surface;
+    for door_surface in door_surfaces {
+        process_door_surface(door_surface, building_id);
+    }
+}
+
+pub fn process_window_surface(input_window_surface: &WindowSurface, building_id: &Id) {
+    let occupied_space = &input_window_surface.occupied_space;
+    //let window_id = &occupied_space.space.city_object.gml.id;
+    let space = &occupied_space.space;
+    for multi_surface in &space.lod3_multi_surface {
+        let window_id = &multi_surface.gml.id;  
+        process_multi_surface(&multi_surface, building_id, &window_id);
+    }
+}
+
+pub fn process_door_surface(input_window_surface: &DoorSurface, building_id: &Id) {
+    // todo: Muss noch implementiert werden
+    // ecitygml does right now not support window surfaces
 }
 
 pub fn process_roof_surface(input_roof_surface: &RoofSurface, building_id: &Id) {
-    let multi_surfaces = &input_roof_surface.thematic_surface.lod2_multi_surface;
+    let multi_surfaces = &input_roof_surface.thematic_surface.lod3_multi_surface;
     if let Some(multi_surface) = multi_surfaces {
         // get the id of the multi surface
         let multi_surfaces_id = &multi_surface.gml.id;
@@ -75,7 +105,7 @@ pub fn process_roof_surface(input_roof_surface: &RoofSurface, building_id: &Id) 
 }
 
 pub fn process_ground_surface(input_ground_surface: &GroundSurface, building_id: &Id) {
-    let multi_surfaces = &input_ground_surface.thematic_surface.lod2_multi_surface;
+    let multi_surfaces = &input_ground_surface.thematic_surface.lod3_multi_surface;
     if let Some(multi_surface) = multi_surfaces {
         // get the id of the multi surface
         let multi_surfaces_id = &multi_surface.gml.id;

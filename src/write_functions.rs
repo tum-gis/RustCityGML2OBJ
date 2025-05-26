@@ -5,6 +5,10 @@ use std::io::{BufWriter, Write};
 use std::path::Path;
 use clap::Parser;
 
+pub fn write_json_mapping_file(){
+    // todo: muss noch implementiert werden
+}
+
 pub fn write_obj_file(
     input_points: Vec<[f64; 3]>,
     triangles: Vec<u32>,
