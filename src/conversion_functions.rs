@@ -1,4 +1,4 @@
-use crate::geometry_functions::triangulate;
+use crate::geometry_functions::{get_buffered_bounding_box_with_reflectors, triangulate};
 use crate::write_functions::write_obj_file;
 pub use ecitygml::model::building::Building;
 pub use ecitygml_core::model::construction::{
@@ -13,6 +13,8 @@ use nalgebra::geometry::Isometry3;
 use rayon::prelude::*;
 
 pub fn process_building_components(input_building: &mut Building, tbw: bool) {
+    let bbox = get_buffered_bounding_box_with_reflectors(input_building);
+
     // get the translation parameter into a local crs in case it is desired
     let mut dx: f64 = 0.0;
     let mut dy: f64 = 0.0;
@@ -42,21 +44,21 @@ pub fn process_building_components(input_building: &mut Building, tbw: bool) {
     let building_id_for_walls = building_id.clone();
     let all_wall_surface = &input_building.wall_surface;
     all_wall_surface.par_iter().for_each(|wall_surface| {
-        process_wall_surface(wall_surface, &building_id_for_walls, dx, dy, dz);
+        process_wall_surface(wall_surface, &building_id_for_walls, dx, dy, dz, &bbox);
     });
 
     // Roof surfaces
     let building_id_for_roofs = building_id.clone();
     let all_roof_surface = &input_building.roof_surface;
     all_roof_surface.par_iter().for_each(|roof_surface| {
-        process_roof_surface(roof_surface, &building_id_for_roofs, dx, dy, dz);
+        process_roof_surface(roof_surface, &building_id_for_roofs, dx, dy, dz, &bbox);
     });
 
     // Ground surfaces
     let building_id_for_grounds = building_id.clone();
     let all_ground_surface = &input_building.ground_surface;
     all_ground_surface.par_iter().for_each(|ground_surface| {
-        process_ground_surface(ground_surface, &building_id_for_grounds, dx, dy, dz);
+        process_ground_surface(ground_surface, &building_id_for_grounds, dx, dy, dz, &bbox);
     });
 }
 
@@ -66,6 +68,7 @@ pub fn process_wall_surface(
     dx: f64,
     dy: f64,
     dz: f64,
+    bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
 ) {
     let thematic_info = "WallSurface";
     // Consider the thematic surfaces
@@ -82,18 +85,19 @@ pub fn process_wall_surface(
             dx,
             dy,
             dz,
+            &bbox,
         )
     }
     // Consider the window surfaces
     let window_surfaces = &input_wall_surface.window_surface;
     for window_surface in window_surfaces {
-        process_window_surface(window_surface, building_id, dx, dy, dz);
+        process_window_surface(window_surface, building_id, dx, dy, dz, &bbox);
     }
 
     // Consider the door surfaces
     let door_surfaces = &input_wall_surface.door_surface;
     for door_surface in door_surfaces {
-        process_door_surface(door_surface, building_id, dx, dy, dz);
+        process_door_surface(door_surface, building_id, dx, dy, dz, &bbox);
     }
 }
 
@@ -103,6 +107,7 @@ pub fn process_window_surface(
     dx: f64,
     dy: f64,
     dz: f64,
+    bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
 ) {
     let thematic_info = "WindowSurface";
     let occupied_space = &input_window_surface.occupied_space;
@@ -119,6 +124,7 @@ pub fn process_window_surface(
             dx,
             dy,
             dz,
+            bbox,
         );
     }
 }
@@ -129,6 +135,7 @@ pub fn process_door_surface(
     dx: f64,
     dy: f64,
     dz: f64,
+    bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
 ) {
     let thematic_info = "DoorSurface";
     let occupied_space = &input_door_surface.occupied_space;
@@ -145,6 +152,7 @@ pub fn process_door_surface(
             dx,
             dy,
             dz,
+            &bbox,
         );
     }
 }
@@ -155,6 +163,7 @@ pub fn process_roof_surface(
     dx: f64,
     dy: f64,
     dz: f64,
+    bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
 ) {
     let thematic_info = "RoofSurface";
     let multi_surfaces = &input_roof_surface.thematic_surface.lod3_multi_surface;
@@ -170,6 +179,7 @@ pub fn process_roof_surface(
             dx,
             dy,
             dz,
+            &bbox,
         )
     }
 }
@@ -180,6 +190,7 @@ pub fn process_ground_surface(
     dx: f64,
     dy: f64,
     dz: f64,
+    bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
 ) {
     let thematic_info = "GroundSurface";
     let multi_surfaces = &input_ground_surface.thematic_surface.lod3_multi_surface;
@@ -195,6 +206,7 @@ pub fn process_ground_surface(
             dx,
             dy,
             dz,
+            bbox,
         )
     }
 }
@@ -208,6 +220,7 @@ pub fn process_multi_surface(
     dx: f64,
     dy: f64,
     dz: f64,
+    bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
 ) {
     let surface_members = input_multi_surface.surface_member();
     for surface_member in surface_members {
@@ -220,6 +233,7 @@ pub fn process_multi_surface(
             dx,
             dy,
             dz,
+            bbox,
         );
     }
 }
@@ -233,6 +247,7 @@ pub fn process_surface_member(
     dx: f64,
     dy: f64,
     dz: f64,
+    bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
 ) {
     // Perform the triangulation.
     let (triangles, all_points) = triangulate(input_surface_member);
@@ -248,8 +263,9 @@ pub fn process_surface_member(
             dy,
             dz,
         );
+
+    // Calculate the bounding box and add little pyramids in the corners
     } else {
-        // todo: Write the results to obj-format
         write_obj_file(
             all_points,
             triangles,
