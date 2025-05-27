@@ -232,10 +232,10 @@ pub fn process_surface_member(
     let (triangles, all_points) = triangulate(input_surface_member);
     let input_surface_member_id = &input_surface_member.gml.id;
     if process_with_poly_id {
-        write_obj_file(all_points, triangles, building_id, input_surface_member_id);
+        write_obj_file(all_points, triangles, building_id, input_surface_member_id, &thematic_info);
     } else {
         // todo: Write the results to obj-format
-        write_obj_file(all_points, triangles, building_id, input_surface_member_id);
+        write_obj_file(all_points, triangles, building_id, input_surface_member_id, &thematic_info);
     }
 
     if addBB {

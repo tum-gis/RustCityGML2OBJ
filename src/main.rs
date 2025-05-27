@@ -22,7 +22,7 @@ struct Args {
     #[arg(long, default_value_t = false)]
     tbw: bool,
 
-    /// Some boolean flag (like TBW)
+    /// Option for adding the bounding box to the obj files
     #[arg(long, default_value_t = false)]
     addJSON: bool,
 

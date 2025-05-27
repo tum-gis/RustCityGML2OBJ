@@ -1,11 +1,52 @@
 use crate::Args;
 use clap::Parser;
 use egml::model::base::Id;
+use serde::Serialize;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
-pub fn write_json_mapping_file() {
+#[derive(Serialize)]
+struct Metadata {
+    building_id: String,
+    semantic_surface_id: String,
+    thematic_role: String,
+}
+
+pub fn write_json_metadata(
+    building_id: &Id,
+    semantic_surface_id: &Id,
+    thematic_role: &str,
+    output_dir: &str,
+) {
+    let metadata = Metadata {
+        building_id: building_id.to_string(),
+        semantic_surface_id: semantic_surface_id.to_string(),
+        thematic_role: thematic_role.to_string(),
+    };
+
+    let filename = format!(
+        "{}___{}.json",
+        metadata.building_id, metadata.semantic_surface_id
+    );
+
+    let file_path = Path::new(output_dir).join(filename);
+
+    let file = match File::create(&file_path) {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("Failed to create JSON file: {}", e);
+            return;
+        }
+    };
+
+    let writer = BufWriter::new(file);
+    if let Err(e) = serde_json::to_writer_pretty(writer, &metadata) {
+        eprintln!("Failed to write JSON metadata: {}", e);
+    }
+}
+
+pub fn import_bbox_from_file() {
     // todo: muss noch implementiert werden
 }
 
@@ -14,6 +55,7 @@ pub fn write_obj_file(
     triangles: Vec<u32>,
     building_id: &Id,
     semantic_surface_id: &Id,
+    thematic_role: &str,
 ) {
     let args = Args::parse();
     let building_id_string = building_id.to_string();
@@ -54,5 +96,15 @@ pub fn write_obj_file(
                 return;
             }
         }
+    }
+
+    if args.addJSON {
+        // write out the json file containing the metadata
+        write_json_metadata(
+            building_id,
+            semantic_surface_id,
+            thematic_role,
+            &args.output,
+        );
     }
 }
