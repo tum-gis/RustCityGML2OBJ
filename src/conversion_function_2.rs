@@ -42,16 +42,16 @@ pub fn collect_building_geometries(input_building: &mut Building, tbw: bool){
         
         // Process the MulitSurfaces
         for multi_surface in multi_surfaces{
-            process_multi_surface_2(&multi_surface, building_id, class, dx, dy, dz);
+            process_multi_surface_2(&multi_surface, building_id, class, dx, dy, dz, &bbox);
         }
     }
 }
 
-pub fn process_multi_surface_2(input_multi_surface: &(LevelOfDetail, MultiSurface), building_id: &Id, class: CityObjectClass, dx: f64, dy: f64, dz: f64){
+pub fn process_multi_surface_2(input_multi_surface: &(LevelOfDetail, MultiSurface), building_id: &Id, class: CityObjectClass, dx: f64, dy: f64, dz: f64, bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>)){
     let stuffs = &input_multi_surface.1.surface_member();
     let stuff_gml_id = &input_multi_surface.1.gml.id;
     for surface_member in *stuffs{
-       process_surface_member_2(surface_member, building_id, stuff_gml_id, class, false,dx, dy, dz);
+       process_surface_member_2(surface_member, building_id, stuff_gml_id, class, false,dx, dy, dz, bbox);
     }
 }
 pub fn process_surface_member_2(
@@ -63,10 +63,11 @@ pub fn process_surface_member_2(
     dx: f64,
     dy: f64,
     dz: f64,
-    //bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
+    bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
 ) {
-    // Perform the triangulation.
-   
+    // todo: finde eine möglichkeit die bbox mit in den prozess einzubinden
+    
+    // todo: implement a way to get the thematic info in form of a string
     let thematic_info_string = "tbd";
     let (triangles, all_points) = triangulate(input_surface_member);
     let input_surface_member_id = &input_surface_member.gml.id;
@@ -80,6 +81,7 @@ pub fn process_surface_member_2(
             dx,
             dy,
             dz,
+            bbox,
         );
         
     // Calculate the bounding box and add little pyramids in the corners
@@ -93,6 +95,7 @@ pub fn process_surface_member_2(
             dx,
             dy,
             dz,
+            bbox,
         );
     }
 }

@@ -68,6 +68,7 @@ pub fn write_obj_file(
     dx: f64,
     dy: f64,
     dz: f64,
+    bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>), // use pairs for edges
 ) {
     let args = Args::parse();
     let building_id_string = building_id.to_string();
@@ -86,32 +87,57 @@ pub fn write_obj_file(
 
     let mut writer = BufWriter::new(file);
 
-    // Write vertices
-    for point in input_points.iter() {
+    // --- Write main geometry vertices ---
+    for point in &input_points {
         if let Err(e) = writeln!(writer, "v {} {} {}", point[0], point[1], point[2]) {
             eprintln!("Failed to write vertex: {}", e);
             return;
         }
     }
 
-    // Write faces (triangles)
+    let base_vertex_count = input_points.len();
+
+    // --- Write triangle faces ---
     if triangles.len() % 3 != 0 {
         eprintln!("Triangle index list is not a multiple of 3.");
         return;
     }
 
     for face in triangles.chunks(3) {
-        if face.len() == 3 {
-            // OBJ format uses 1-based indexing
-            if let Err(e) = writeln!(writer, "f {} {} {}", face[0] + 1, face[1] + 1, face[2] + 1) {
-                eprintln!("Failed to write face: {}", e);
-                return;
-            }
+        if let Err(e) = writeln!(writer, "f {} {} {}", face[0] + 1, face[1] + 1, face[2] + 1) {
+            eprintln!("Failed to write face: {}", e);
+            return;
+        }
+    }
+
+    // --- Write bounding box vertices ---
+    let (bbox_vertices, bbox_triangles) = bbox;
+    for point in bbox_vertices {
+        if let Err(e) = writeln!(writer, "v {} {} {}", point[0], point[1], point[2]) {
+            eprintln!("Failed to write bbox vertex: {}", e);
+            return;
+        }
+    }
+
+    // --- Write bounding box lines (edges) ---
+    // offset index by input_points.len(), because OBJ indices are 1-based
+
+    let bbox_vertex_offset = base_vertex_count;
+    // --- Write bounding box faces (triangles) ---
+    for face in bbox_triangles {
+        if let Err(e) = writeln!(
+            writer,
+            "f {} {} {}",
+            bbox_vertex_offset + face[0] as usize + 1,
+            bbox_vertex_offset + face[1] as usize + 1,
+            bbox_vertex_offset + face[2] as usize + 1,
+        ) {
+            eprintln!("Failed to write bbox triangle: {}", e);
+            return;
         }
     }
 
     if args.add_json {
-        // write out the json file containing the metadata
         write_json_metadata(
             building_id,
             semantic_surface_id,
@@ -123,3 +149,4 @@ pub fn write_obj_file(
         );
     }
 }
+

@@ -12,6 +12,11 @@ use nalgebra::base::Vector3;
 use nalgebra::geometry::Isometry3;
 use rayon::prelude::*;
 
+//This file is old and the funcitons in here are not going to be used any further
+//More or less the same logic is also implemented in the conversion_function_2.rs
+//If the functions in Conversion_functions_2.rs prove to be stable, this file
+// is going to be permanently deleted.
+
 pub fn process_building_components(input_building: &mut Building, tbw: bool) {
     let bbox = get_buffered_bounding_box_with_reflectors(input_building);
 
@@ -262,6 +267,7 @@ pub fn process_surface_member(
             dx,
             dy,
             dz,
+            bbox,
         );
 
     // Calculate the bounding box and add little pyramids in the corners
@@ -275,6 +281,7 @@ pub fn process_surface_member(
             dx,
             dy,
             dz,
+            bbox,
         );
     }
 }
