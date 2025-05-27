@@ -11,6 +11,9 @@ struct Metadata {
     building_id: String,
     semantic_surface_id: String,
     thematic_role: String,
+    dx: String,
+    dy: String,
+    dz: String,
 }
 
 pub fn write_json_metadata(
@@ -18,11 +21,18 @@ pub fn write_json_metadata(
     semantic_surface_id: &Id,
     thematic_role: &str,
     output_dir: &str,
+    dx: f64,
+    dy: f64,
+    dz: f64,
 ) {
     let metadata = Metadata {
         building_id: building_id.to_string(),
         semantic_surface_id: semantic_surface_id.to_string(),
         thematic_role: thematic_role.to_string(),
+        dx: dx.to_string(),
+        dy: dy.to_string(),
+        dz: dz.to_string(),       
+        
     };
 
     let filename = format!(
@@ -56,6 +66,9 @@ pub fn write_obj_file(
     building_id: &Id,
     semantic_surface_id: &Id,
     thematic_role: &str,
+    dx: f64,
+    dy: f64,
+    dz: f64,
 ) {
     let args = Args::parse();
     let building_id_string = building_id.to_string();
@@ -98,13 +111,16 @@ pub fn write_obj_file(
         }
     }
 
-    if args.addJSON {
+    if args.add_json {
         // write out the json file containing the metadata
         write_json_metadata(
             building_id,
             semantic_surface_id,
             thematic_role,
             &args.output,
+            dx, 
+            dy,
+            dz,
         );
     }
 }

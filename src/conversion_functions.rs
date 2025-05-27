@@ -49,21 +49,45 @@ pub fn process_building_components(
     let building_id_for_walls = building_id.clone();
     let all_wall_surface = &input_building.wall_surface;
     all_wall_surface.par_iter().for_each(|wall_surface| {
-        process_wall_surface(wall_surface, &building_id_for_walls, addBB, addJSON);
+        process_wall_surface(
+            wall_surface,
+            &building_id_for_walls,
+            addBB,
+            addJSON,
+            dx,
+            dy,
+            dz,
+        );
     });
 
     // Roof surfaces
     let building_id_for_roofs = building_id.clone();
     let all_roof_surface = &input_building.roof_surface;
     all_roof_surface.par_iter().for_each(|roof_surface| {
-        process_roof_surface(roof_surface, &building_id_for_roofs, addBB, addJSON);
+        process_roof_surface(
+            roof_surface,
+            &building_id_for_roofs,
+            addBB,
+            addJSON,
+            dx,
+            dy,
+            dz,
+        );
     });
 
     // Ground surfaces
     let building_id_for_grounds = building_id.clone();
     let all_ground_surface = &input_building.ground_surface;
     all_ground_surface.par_iter().for_each(|ground_surface| {
-        process_ground_surface(ground_surface, &building_id_for_grounds, addBB, addJSON);
+        process_ground_surface(
+            ground_surface,
+            &building_id_for_grounds,
+            addBB,
+            addJSON,
+            dx,
+            dy,
+            dz,
+        );
     });
 }
 
@@ -72,6 +96,9 @@ pub fn process_wall_surface(
     building_id: &Id,
     addBB: bool,
     addJSON: bool,
+    dx: f64,
+    dy: f64,
+    dz: f64,
 ) {
     let thematic_info = "WallSurface";
     // Consider the thematic surfaces
@@ -87,18 +114,21 @@ pub fn process_wall_surface(
             false,
             addBB,
             addJSON,
+            dx,
+            dy,
+            dz,
         )
     }
     // Consider the window surfaces
     let window_surfaces = &input_wall_surface.window_surface;
     for window_surface in window_surfaces {
-        process_window_surface(window_surface, building_id, addBB, addJSON);
+        process_window_surface(window_surface, building_id, addBB, addJSON, dx, dy, dz);
     }
 
     // Consider the door surfaces
     let door_surfaces = &input_wall_surface.door_surface;
     for door_surface in door_surfaces {
-        process_door_surface(door_surface, building_id, addBB, addJSON);
+        process_door_surface(door_surface, building_id, addBB, addJSON, dx, dy, dz);
     }
 }
 
@@ -107,6 +137,9 @@ pub fn process_window_surface(
     building_id: &Id,
     addBB: bool,
     addJSON: bool,
+    dx: f64,
+    dy: f64,
+    dz: f64,
 ) {
     let thematic_info = "WindowSurface";
     let occupied_space = &input_window_surface.occupied_space;
@@ -122,6 +155,9 @@ pub fn process_window_surface(
             true,
             addBB,
             addJSON,
+            dx,
+            dy,
+            dz,
         );
     }
 }
@@ -131,6 +167,9 @@ pub fn process_door_surface(
     building_id: &Id,
     addBB: bool,
     addJSON: bool,
+    dx: f64,
+    dy: f64,
+    dz: f64,
 ) {
     let thematic_info = "DoorSurface";
     let occupied_space = &input_door_surface.occupied_space;
@@ -146,6 +185,9 @@ pub fn process_door_surface(
             true,
             addBB,
             addJSON,
+            dx,
+            dy,
+            dz,
         );
     }
 }
@@ -155,6 +197,9 @@ pub fn process_roof_surface(
     building_id: &Id,
     addBB: bool,
     addJSON: bool,
+    dx: f64,
+    dy: f64,
+    dz: f64,
 ) {
     let thematic_info = "RoofSurface";
     let multi_surfaces = &input_roof_surface.thematic_surface.lod3_multi_surface;
@@ -169,6 +214,9 @@ pub fn process_roof_surface(
             false,
             addBB,
             addJSON,
+            dx,
+            dy,
+            dz,
         )
     }
 }
@@ -178,6 +226,9 @@ pub fn process_ground_surface(
     building_id: &Id,
     addBB: bool,
     addJSON: bool,
+    dx: f64,
+    dy: f64,
+    dz: f64,
 ) {
     let thematic_info = "GroundSurface";
     let multi_surfaces = &input_ground_surface.thematic_surface.lod3_multi_surface;
@@ -192,6 +243,9 @@ pub fn process_ground_surface(
             false,
             addBB,
             addJSON,
+            dx,
+            dy,
+            dz,
         )
     }
 }
@@ -204,6 +258,9 @@ pub fn process_multi_surface(
     processing_windows: bool,
     addBB: bool,
     addJSON: bool,
+    dx: f64,
+    dy: f64,
+    dz: f64,
 ) {
     let surface_members = input_multi_surface.surface_member();
     for surface_member in surface_members {
@@ -215,6 +272,9 @@ pub fn process_multi_surface(
             processing_windows,
             addBB,
             addJSON,
+            dx,
+            dy,
+            dz,
         );
     }
 }
@@ -227,15 +287,36 @@ pub fn process_surface_member(
     process_with_poly_id: bool,
     addBB: bool,
     addJSON: bool,
+    dx: f64,
+    dy: f64,
+    dz: f64,
 ) {
     // Perform the triangulation.
     let (triangles, all_points) = triangulate(input_surface_member);
     let input_surface_member_id = &input_surface_member.gml.id;
     if process_with_poly_id {
-        write_obj_file(all_points, triangles, building_id, input_surface_member_id, &thematic_info);
+        write_obj_file(
+            all_points,
+            triangles,
+            building_id,
+            input_surface_member_id,
+            &thematic_info,
+            dx,
+            dy,
+            dz,
+        );
     } else {
         // todo: Write the results to obj-format
-        write_obj_file(all_points, triangles, building_id, input_surface_member_id, &thematic_info);
+        write_obj_file(
+            all_points,
+            triangles,
+            building_id,
+            input_surface_member_id,
+            &thematic_info,
+            dx,
+            dy,
+            dz,
+        );
     }
 
     if addBB {

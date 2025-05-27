@@ -24,11 +24,11 @@ struct Args {
 
     /// Option for adding the bounding box to the obj files
     #[arg(long, default_value_t = false)]
-    addJSON: bool,
+    add_json: bool,
 
     /// Some boolean flag (like TBW)
     #[arg(long, default_value_t = false)]
-    addBB: bool,
+    add_bb: bool,
 }
 
 //static INPUT_DIR: &'static str =
@@ -61,7 +61,7 @@ fn main() {
                         let all_buildings = &mut data.building;
 
                         all_buildings.par_iter_mut().for_each(|building| {
-                            conversion_functions::process_building_components(building, args.tbw, args.addBB, args.addJSON);
+                            conversion_functions::process_building_components(building, args.tbw, args.add_bb, args.add_json);
                         });
                     }
                     Err(e) => {
