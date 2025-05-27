@@ -62,7 +62,7 @@ fn main() {
                         let all_buildings = &mut data.building;
 
                         all_buildings.par_iter_mut().for_each(|building| {
-                            conversion_functions::collect_building_geometries(building, args.tbw);
+                            conversion_functions::collect_building_geometries(building, args.tbw, args.add_bb, args.add_json);
                         });
                     }
                     Err(e) => {

@@ -1,15 +1,19 @@
-use crate::geometry_functions::{get_buffered_bounding_box_with_reflectors, triangulate};
+use crate::geometry_functions::{construct_buffered_bounding_box, triangulate};
 use crate::write_functions::write_obj_file;
 use ecitygml::operations::GeometryCollector;
 use ecitygml_core::model::building::Building;
-use ecitygml_core::model::common::LevelOfDetail::{One, Three, Two, Zero};
 use ecitygml_core::model::common::{CityObjectClass, LevelOfDetail};
 use ecitygml_core::operations::{FeatureWithGeometry, Visitable};
 use egml::model::base::Id;
 use egml::model::geometry::{MultiSurface, Polygon};
 
-pub fn collect_building_geometries(input_building: &mut Building, tbw: bool) {
-    let bbox = get_buffered_bounding_box_with_reflectors(input_building);
+pub fn collect_building_geometries(
+    input_building: &mut Building,
+    tbw: bool,
+    add_bb: bool,
+    add_json: bool,
+) {
+    let bbox = construct_buffered_bounding_box(input_building);
     let building_id = &input_building.city_object.gml.id;
 
     // get the translation parameter into a local crs in case it is desired

@@ -3,9 +3,9 @@ use earcut::Earcut;
 use earcut::utils3d::project3d_to_2d;
 use ecitygml_core::model::building::Building;
 use ecitygml_core::operations::FeatureWithGeometry;
+use egml::model::base::Id;
 use egml::model::geometry::Polygon;
 use egml::operations::geometry::Geometry;
-use egml::model::base::Id;
 
 // This function is used to calculate the translation parameters for a single building
 pub fn get_building_wise_translation_parameters(
@@ -78,7 +78,9 @@ pub fn triangulate(input_polygon: &Polygon) -> (Vec<u32>, Vec<[f64; 3]>) {
     (triangles, all_points)
 }
 
-pub fn get_buffered_bounding_box_with_reflectors(input_building: &Building) -> (Vec<[f64; 3]>, Vec<[u64; 3]>) {
+pub fn construct_buffered_bounding_box(
+    input_building: &Building,
+) -> (Vec<[f64; 3]>, Vec<[u64; 3]>) {
     let mut vertices = Vec::new();
     let mut indices = Vec::new();
 

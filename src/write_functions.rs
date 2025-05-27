@@ -68,7 +68,7 @@ pub fn write_obj_file(
     dx: f64,
     dy: f64,
     dz: f64,
-    bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>), // use pairs for edges
+    bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
 ) {
     let args = Args::parse();
     let building_id_string = building_id.to_string();
@@ -110,30 +110,32 @@ pub fn write_obj_file(
         }
     }
 
-    // --- Write bounding box vertices ---
-    let (bbox_vertices, bbox_triangles) = bbox;
-    for point in bbox_vertices {
-        if let Err(e) = writeln!(writer, "v {} {} {}", point[0], point[1], point[2]) {
-            eprintln!("Failed to write bbox vertex: {}", e);
-            return;
+    if args.add_bb {
+        // --- Write bounding box vertices ---
+        let (bbox_vertices, bbox_triangles) = bbox;
+        for point in bbox_vertices {
+            if let Err(e) = writeln!(writer, "v {} {} {}", point[0], point[1], point[2]) {
+                eprintln!("Failed to write bbox vertex: {}", e);
+                return;
+            }
         }
-    }
 
-    // --- Write bounding box lines (edges) ---
-    // offset index by input_points.len(), because OBJ indices are 1-based
+        // --- Write bounding box lines (edges) ---
+        // offset index by input_points.len(), because OBJ indices are 1-based
 
-    let bbox_vertex_offset = base_vertex_count;
-    // --- Write bounding box faces (triangles) ---
-    for face in bbox_triangles {
-        if let Err(e) = writeln!(
-            writer,
-            "f {} {} {}",
-            bbox_vertex_offset + face[0] as usize + 1,
-            bbox_vertex_offset + face[1] as usize + 1,
-            bbox_vertex_offset + face[2] as usize + 1,
-        ) {
-            eprintln!("Failed to write bbox triangle: {}", e);
-            return;
+        let bbox_vertex_offset = base_vertex_count;
+        // --- Write bounding box faces (triangles) ---
+        for face in bbox_triangles {
+            if let Err(e) = writeln!(
+                writer,
+                "f {} {} {}",
+                bbox_vertex_offset + face[0] as usize + 1,
+                bbox_vertex_offset + face[1] as usize + 1,
+                bbox_vertex_offset + face[2] as usize + 1,
+            ) {
+                eprintln!("Failed to write bbox triangle: {}", e);
+                return;
+            }
         }
     }
 
@@ -149,4 +151,3 @@ pub fn write_obj_file(
         );
     }
 }
-
