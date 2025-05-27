@@ -1,8 +1,7 @@
-mod conversion_functions;
 mod geometry_functions;
 mod translation_module;
 mod write_functions;
-mod conversion_function_2;
+mod conversion_functions;
 
 use clap::Parser;
 use rayon::prelude::*;
@@ -63,7 +62,7 @@ fn main() {
                         let all_buildings = &mut data.building;
 
                         all_buildings.par_iter_mut().for_each(|building| {
-                            conversion_function_2::collect_building_geometries(building, args.tbw);
+                            conversion_functions::collect_building_geometries(building, args.tbw);
                         });
                     }
                     Err(e) => {
