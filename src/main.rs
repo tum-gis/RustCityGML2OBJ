@@ -1,7 +1,7 @@
+mod conversion_functions;
 mod geometry_functions;
 mod translation_module;
 mod write_functions;
-mod conversion_functions;
 
 use clap::Parser;
 use rayon::prelude::*;
@@ -33,7 +33,7 @@ struct Args {
 
     /// Option for importing a bounding box instead of creating a new one from the data
     #[arg(long, default_value_t = false)]
-    inport_bb: bool,
+    import_bb: bool,
 }
 
 fn main() {
@@ -50,7 +50,7 @@ fn main() {
         let path = entry.path();
 
         // Check if the file ends with a valid extension
-        if let Some(ext) = path.extension().and_then(|e| e.to_str()) { 
+        if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
             let ext = ext.to_lowercase();
             if ext == "gml" || ext == "xml" {
                 println!("Processing file: {}", path.display());
@@ -62,7 +62,13 @@ fn main() {
                         let all_buildings = &mut data.building;
 
                         all_buildings.par_iter_mut().for_each(|building| {
-                            conversion_functions::collect_building_geometries(building, args.tbw, args.add_bb, args.add_json);
+                            conversion_functions::collect_building_geometries(
+                                building,
+                                args.tbw,
+                                args.add_bb,
+                                args.add_json,
+                                args.import_bb,
+                            );
                         });
                     }
                     Err(e) => {

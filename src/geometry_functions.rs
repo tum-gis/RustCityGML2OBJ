@@ -170,3 +170,7 @@ pub fn construct_buffered_bounding_box(
     println!("Envelope hat keine gültigen lower/upper corner Koordinaten.");
     (vertices, indices)
 }
+
+pub fn import_bounding_box(path_to_bounding_box: &str){
+    // todo: muss noch implementiert werden
+}
