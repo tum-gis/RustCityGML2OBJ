@@ -12,17 +12,11 @@ use nalgebra::base::Vector3;
 use nalgebra::geometry::Isometry3;
 use rayon::prelude::*;
 
-pub fn process_building_components(
-    input_building: &mut Building,
-    tbw: bool,
-    addBB: bool,
-    addJSON: bool,
-) {
+pub fn process_building_components(input_building: &mut Building, tbw: bool) {
     // get the translation parameter into a local crs in case it is desired
     let mut dx: f64 = 0.0;
     let mut dy: f64 = 0.0;
     let mut dz: f64 = 0.0;
-    let envelope1 = &input_building.envelope();
     if tbw {
         // Calculate the envelope of the building and get the tranformation parameters from it
         if let Some(envelope) = input_building.envelope() {
@@ -31,7 +25,6 @@ pub fn process_building_components(
             dx = -((upper_corner.x() + lower_corner.x()) / 2.0);
             dy = -((upper_corner.y() + lower_corner.y()) / 2.0);
             dz = -((upper_corner.z() + lower_corner.z()) / 2.0);
-            //println!("dx: {}, dy: {}, dz: {}", dx, dy, dz);
         } else {
             println!("Envelope hat keine gültigen lower/upper corner Koordinaten.");
         }
@@ -49,53 +42,27 @@ pub fn process_building_components(
     let building_id_for_walls = building_id.clone();
     let all_wall_surface = &input_building.wall_surface;
     all_wall_surface.par_iter().for_each(|wall_surface| {
-        process_wall_surface(
-            wall_surface,
-            &building_id_for_walls,
-            addBB,
-            addJSON,
-            dx,
-            dy,
-            dz,
-        );
+        process_wall_surface(wall_surface, &building_id_for_walls, dx, dy, dz);
     });
 
     // Roof surfaces
     let building_id_for_roofs = building_id.clone();
     let all_roof_surface = &input_building.roof_surface;
     all_roof_surface.par_iter().for_each(|roof_surface| {
-        process_roof_surface(
-            roof_surface,
-            &building_id_for_roofs,
-            addBB,
-            addJSON,
-            dx,
-            dy,
-            dz,
-        );
+        process_roof_surface(roof_surface, &building_id_for_roofs, dx, dy, dz);
     });
 
     // Ground surfaces
     let building_id_for_grounds = building_id.clone();
     let all_ground_surface = &input_building.ground_surface;
     all_ground_surface.par_iter().for_each(|ground_surface| {
-        process_ground_surface(
-            ground_surface,
-            &building_id_for_grounds,
-            addBB,
-            addJSON,
-            dx,
-            dy,
-            dz,
-        );
+        process_ground_surface(ground_surface, &building_id_for_grounds, dx, dy, dz);
     });
 }
 
 pub fn process_wall_surface(
     input_wall_surface: &WallSurface,
     building_id: &Id,
-    addBB: bool,
-    addJSON: bool,
     dx: f64,
     dy: f64,
     dz: f64,
@@ -112,8 +79,6 @@ pub fn process_wall_surface(
             multi_surfaces_id,
             thematic_info,
             false,
-            addBB,
-            addJSON,
             dx,
             dy,
             dz,
@@ -122,21 +87,19 @@ pub fn process_wall_surface(
     // Consider the window surfaces
     let window_surfaces = &input_wall_surface.window_surface;
     for window_surface in window_surfaces {
-        process_window_surface(window_surface, building_id, addBB, addJSON, dx, dy, dz);
+        process_window_surface(window_surface, building_id, dx, dy, dz);
     }
 
     // Consider the door surfaces
     let door_surfaces = &input_wall_surface.door_surface;
     for door_surface in door_surfaces {
-        process_door_surface(door_surface, building_id, addBB, addJSON, dx, dy, dz);
+        process_door_surface(door_surface, building_id, dx, dy, dz);
     }
 }
 
 pub fn process_window_surface(
     input_window_surface: &WindowSurface,
     building_id: &Id,
-    addBB: bool,
-    addJSON: bool,
     dx: f64,
     dy: f64,
     dz: f64,
@@ -153,8 +116,6 @@ pub fn process_window_surface(
             &window_id,
             thematic_info,
             true,
-            addBB,
-            addJSON,
             dx,
             dy,
             dz,
@@ -165,8 +126,6 @@ pub fn process_window_surface(
 pub fn process_door_surface(
     input_door_surface: &DoorSurface,
     building_id: &Id,
-    addBB: bool,
-    addJSON: bool,
     dx: f64,
     dy: f64,
     dz: f64,
@@ -183,8 +142,6 @@ pub fn process_door_surface(
             &window_id,
             thematic_info,
             true,
-            addBB,
-            addJSON,
             dx,
             dy,
             dz,
@@ -195,8 +152,6 @@ pub fn process_door_surface(
 pub fn process_roof_surface(
     input_roof_surface: &RoofSurface,
     building_id: &Id,
-    addBB: bool,
-    addJSON: bool,
     dx: f64,
     dy: f64,
     dz: f64,
@@ -212,8 +167,6 @@ pub fn process_roof_surface(
             multi_surfaces_id,
             thematic_info,
             false,
-            addBB,
-            addJSON,
             dx,
             dy,
             dz,
@@ -224,8 +177,6 @@ pub fn process_roof_surface(
 pub fn process_ground_surface(
     input_ground_surface: &GroundSurface,
     building_id: &Id,
-    addBB: bool,
-    addJSON: bool,
     dx: f64,
     dy: f64,
     dz: f64,
@@ -241,8 +192,6 @@ pub fn process_ground_surface(
             multi_surfaces_id,
             thematic_info,
             false,
-            addBB,
-            addJSON,
             dx,
             dy,
             dz,
@@ -256,8 +205,6 @@ pub fn process_multi_surface(
     multi_surface_id: &Id,
     thematic_info: &str,
     processing_windows: bool,
-    addBB: bool,
-    addJSON: bool,
     dx: f64,
     dy: f64,
     dz: f64,
@@ -270,8 +217,6 @@ pub fn process_multi_surface(
             multi_surface_id,
             thematic_info,
             processing_windows,
-            addBB,
-            addJSON,
             dx,
             dy,
             dz,
@@ -285,8 +230,6 @@ pub fn process_surface_member(
     multi_surface_id: &Id,
     thematic_info: &str,
     process_with_poly_id: bool,
-    addBB: bool,
-    addJSON: bool,
     dx: f64,
     dy: f64,
     dz: f64,
@@ -317,13 +260,5 @@ pub fn process_surface_member(
             dy,
             dz,
         );
-    }
-
-    if addBB {
-        // todo: add functionality to add the bounding box
-    }
-
-    if addJSON {
-        // todo: add functionality to add the json file
     }
 }

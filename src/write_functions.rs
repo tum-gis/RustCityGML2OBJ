@@ -31,8 +31,7 @@ pub fn write_json_metadata(
         thematic_role: thematic_role.to_string(),
         dx: dx.to_string(),
         dy: dy.to_string(),
-        dz: dz.to_string(),       
-        
+        dz: dz.to_string(),
     };
 
     let filename = format!(
@@ -118,7 +117,7 @@ pub fn write_obj_file(
             semantic_surface_id,
             thematic_role,
             &args.output,
-            dx, 
+            dx,
             dy,
             dz,
         );

@@ -22,18 +22,18 @@ struct Args {
     #[arg(long, default_value_t = false)]
     tbw: bool,
 
-    /// Option for adding the bounding box to the obj files
+    /// Option for additionally writing out a json file containing metadata
     #[arg(long, default_value_t = false)]
     add_json: bool,
 
-    /// Some boolean flag (like TBW)
+    /// Option for adding the bounding box to the obj files
     #[arg(long, default_value_t = false)]
     add_bb: bool,
-}
 
-//static INPUT_DIR: &'static str =
-//    "/home/thomas/CityGML2OBJTestfolder/CityGML_3_files/citygml3_tile_for_testing/694_5334__v3.gml";
-//static OUTPUT_DIR: &'static str = "/home/thomas/CityGML2OBJTestfolder/output";
+    /// Option for importing a bounding box instead of creating a new one from the data
+    #[arg(long, default_value_t = false)]
+    inport_bb: bool,
+}
 
 fn main() {
     let args = Args::parse();
@@ -61,7 +61,7 @@ fn main() {
                         let all_buildings = &mut data.building;
 
                         all_buildings.par_iter_mut().for_each(|building| {
-                            conversion_functions::process_building_components(building, args.tbw, args.add_bb, args.add_json);
+                            conversion_functions::process_building_components(building, args.tbw);
                         });
                     }
                     Err(e) => {
