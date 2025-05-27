@@ -1,14 +1,14 @@
-use ecitygml_core::model::building::Building;
-use ecitygml::operations::GeometryCollector;
-use ecitygml_core::model::common::{CityObjectClass, LevelOfDetail};
-use ecitygml_core::operations::{FeatureWithGeometry, Visitable};
-use egml::model::geometry::{MultiSurface, Polygon};
-use ecitygml_core::model::common::LevelOfDetail::{One, Two, Three, Zero};
-use egml::model::base::Id;
 use crate::geometry_functions::{get_buffered_bounding_box_with_reflectors, triangulate};
 use crate::write_functions::write_obj_file;
+use ecitygml::operations::GeometryCollector;
+use ecitygml_core::model::building::Building;
+use ecitygml_core::model::common::LevelOfDetail::{One, Three, Two, Zero};
+use ecitygml_core::model::common::{CityObjectClass, LevelOfDetail};
+use ecitygml_core::operations::{FeatureWithGeometry, Visitable};
+use egml::model::base::Id;
+use egml::model::geometry::{MultiSurface, Polygon};
 
-pub fn collect_building_geometries(input_building: &mut Building, tbw: bool){
+pub fn collect_building_geometries(input_building: &mut Building, tbw: bool) {
     let bbox = get_buffered_bounding_box_with_reflectors(input_building);
     let building_id = &input_building.city_object.gml.id;
 
@@ -28,30 +28,48 @@ pub fn collect_building_geometries(input_building: &mut Building, tbw: bool){
             println!("Envelope hat keine gültigen lower/upper corner Koordinaten.");
         }
     }
-    
+
     let mut collector_1 = GeometryCollector::new();
-     input_building.accept(&mut collector_1);
-    
-    for collected_geometry in collector_1.city_objects{
-        // Obtain all the different data 
+    input_building.accept(&mut collector_1);
+
+    for collected_geometry in collector_1.city_objects {
+        // Obtain all the different data
         let gml_id = collected_geometry.1.gml.id;
         let class = collected_geometry.1.class;
         let implicit_geometries = collected_geometry.1.implicit_geometries;
         let multi_surfaces = collected_geometry.1.multi_surfaces;
-        let solids= collected_geometry.1.solids;
-        
+        let solids = collected_geometry.1.solids;
+
         // Process the MulitSurfaces
-        for multi_surface in multi_surfaces{
+        for multi_surface in multi_surfaces {
             process_multi_surface(&multi_surface, building_id, class, dx, dy, dz, &bbox);
         }
     }
 }
 
-pub fn process_multi_surface(input_multi_surface: &(LevelOfDetail, MultiSurface), building_id: &Id, class: CityObjectClass, dx: f64, dy: f64, dz: f64, bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>)){
+pub fn process_multi_surface(
+    input_multi_surface: &(LevelOfDetail, MultiSurface),
+    building_id: &Id,
+    class: CityObjectClass,
+    dx: f64,
+    dy: f64,
+    dz: f64,
+    bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
+) {
     let stuffs = &input_multi_surface.1.surface_member();
     let stuff_gml_id = &input_multi_surface.1.gml.id;
-    for surface_member in *stuffs{
-       process_surface_member(surface_member, building_id, stuff_gml_id, class, false, dx, dy, dz, bbox);
+    for surface_member in *stuffs {
+        process_surface_member(
+            surface_member,
+            building_id,
+            stuff_gml_id,
+            class,
+            false,
+            dx,
+            dy,
+            dz,
+            bbox,
+        );
     }
 }
 pub fn process_surface_member(
@@ -66,7 +84,7 @@ pub fn process_surface_member(
     bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
 ) {
     // todo: finde eine möglichkeit die bbox mit in den prozess einzubinden
-    
+
     // todo: implement a way to get the thematic info in form of a string
     let thematic_info_string = "tbd";
     let (triangles, all_points) = triangulate(input_surface_member);
@@ -83,7 +101,7 @@ pub fn process_surface_member(
             dz,
             bbox,
         );
-        
+
     // Calculate the bounding box and add little pyramids in the corners
     } else {
         write_obj_file(
