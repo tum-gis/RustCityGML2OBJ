@@ -9,9 +9,10 @@ Command line converter of **CityGML (.gml)** to **OBJ (.obj)** files. This proje
 Please make sure to use the absolute paths to the respective directories.
 
 ### Detailed Project Description
-+ Every building will be converted into a set of `.obj` files
++ This project makes use of the [ecitygml Rust-library](https://docs.rs/ecitygml/latest/ecitygml/).
++ Every building will be converted into a set of `.obj` files each representing exactly one polygon.
 + Every polygon will be triangulated with the [earcut Rust-library](https://github.com/ciscorn/earcut-rs) and will be written into an individual `.obj`
-+ Every `.obj` files adheres to the following naming convention: `<gml_id-of-the-building>__<gml_id_of the polygon>.obj`
++ Every `.obj` files adheres to the following naming convention: `<gml_id_of the polygon>.obj`.
 
 ### :wrench: Optional features
 
