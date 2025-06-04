@@ -7,6 +7,7 @@ use ecitygml_core::operations::{FeatureWithGeometry, Visitable};
 use egml::model::base::Id;
 use egml::model::geometry::{MultiSurface, Polygon};
 use rayon::prelude::*;
+use std::fmt;
 
 pub fn collect_building_geometries(
     input_building: &mut Building,
@@ -63,7 +64,16 @@ pub fn collect_building_geometries(
 
             // Process the MultiSurfaces
             for multi_surface in multi_surfaces {
-                process_multi_surface(&multi_surface, building_id, class, dx, dy, dz, &bbox);
+                process_multi_surface(
+                    &multi_surface,
+                    building_id,
+                    class,
+                    dx,
+                    dy,
+                    dz,
+                    &bbox,
+                    gml_id,
+                );
             }
         });
 }
@@ -76,6 +86,7 @@ pub fn process_multi_surface(
     dy: f64,
     dz: f64,
     bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
+    gml_id: &Id,
 ) {
     let stuffs = &input_multi_surface.1.surface_member();
     let stuff_gml_id = &input_multi_surface.1.gml.id;
@@ -85,55 +96,109 @@ pub fn process_multi_surface(
             building_id,
             stuff_gml_id,
             class,
-            false,
             dx,
             dy,
             dz,
             bbox,
+            gml_id,
+            stuff_gml_id,
         );
     });
-
 }
 pub fn process_surface_member(
     input_surface_member: &Polygon,
     building_id: &Id,
     multi_surface_id: &Id,
     thematic_info: CityObjectClass,
-    process_with_poly_id: bool,
     dx: f64,
     dy: f64,
     dz: f64,
     bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
+    gml_id: &Id,
+    stuff_gml_id: &Id,
 ) {
     // todo: implement a way to get the thematic info in form of a string
-    let thematic_info_string = "tbd";
+    let thematic_info_string =  city_object_class_to_str(thematic_info);
     let (triangles, all_points) = triangulate(input_surface_member);
     let input_surface_member_id = &input_surface_member.gml.id;
-    if process_with_poly_id {
-        write_obj_file(
-            all_points,
-            triangles,
-            building_id,
-            input_surface_member_id,
-            thematic_info_string,
-            dx,
-            dy,
-            dz,
-            bbox,
-        );
 
     // Calculate the bounding box and add little pyramids in the corners
-    } else {
-        write_obj_file(
-            all_points,
-            triangles,
-            building_id,
-            input_surface_member_id,
-            &thematic_info_string,
-            dx,
-            dy,
-            dz,
-            bbox,
-        );
+    write_obj_file(
+        all_points,
+        triangles,
+        building_id,
+        input_surface_member_id,
+        &thematic_info_string,
+        dx,
+        dy,
+        dz,
+        bbox,
+        gml_id,
+        stuff_gml_id,
+    );
+}
+
+pub fn city_object_class_to_str(class: CityObjectClass) -> &'static str {
+    match class {
+        CityObjectClass::AuxiliaryTrafficArea => "AuxiliaryTrafficArea",
+        CityObjectClass::AuxiliaryTrafficSpace => "AuxiliaryTrafficSpace",
+        CityObjectClass::Bridge => "Bridge",
+        CityObjectClass::BridgeConstructiveElement => "BridgeConstructiveElement",
+        CityObjectClass::BridgeFurniture => "BridgeFurniture",
+        CityObjectClass::BridgeInstallation => "BridgeInstallation",
+        CityObjectClass::BridgePart => "BridgePart",
+        CityObjectClass::BridgeRoom => "BridgeRoom",
+        CityObjectClass::Building => "Building",
+        CityObjectClass::BuildingConstructiveElement => "BuildingConstructiveElement",
+        CityObjectClass::BuildingFurniture => "BuildingFurniture",
+        CityObjectClass::BuildingInstallation => "BuildingInstallation",
+        CityObjectClass::BuildingPart => "BuildingPart",
+        CityObjectClass::BuildingRoom => "BuildingRoom",
+        CityObjectClass::BuildingUnit => "BuildingUnit",
+        CityObjectClass::CeilingSurface => "CeilingSurface",
+        CityObjectClass::CityFurniture => "CityFurniture",
+        CityObjectClass::CityObjectGroup => "CityObjectGroup",
+        CityObjectClass::ClearanceSpace => "ClearanceSpace",
+        CityObjectClass::Door => "Door",
+        CityObjectClass::DoorSurface => "DoorSurface",
+        CityObjectClass::FloorSurface => "FloorSurface",
+        CityObjectClass::GenericLogicalSpace => "GenericLogicalSpace",
+        CityObjectClass::GenericOccupiedSpace => "GenericOccupiedSpace",
+        CityObjectClass::GenericThematicSurface => "GenericThematicSurface",
+        CityObjectClass::GenericUnoccupiedSpace => "GenericUnoccupiedSpace",
+        CityObjectClass::GroundSurface => "GroundSurface",
+        CityObjectClass::Hole => "Hole",
+        CityObjectClass::HoleSurface => "HoleSurface",
+        CityObjectClass::HollowSpace => "HollowSpace",
+        CityObjectClass::InteriorWallSurface => "InteriorWallSurface",
+        CityObjectClass::Intersection => "Intersection",
+        CityObjectClass::Marking => "Marking",
+        CityObjectClass::OtherConstruction => "OtherConstruction",
+        CityObjectClass::OuterCeilingSurface => "OuterCeilingSurface",
+        CityObjectClass::OuterFloorSurface => "OuterFloorSurface",
+        CityObjectClass::PlantCover => "PlantCover",
+        CityObjectClass::Railway => "Railway",
+        CityObjectClass::Road => "Road",
+        CityObjectClass::RoofSurface => "RoofSurface",
+        CityObjectClass::Section => "Section",
+        CityObjectClass::SolitaryVegetationObject => "SolitaryVegetationObject",
+        CityObjectClass::Square => "Square",
+        CityObjectClass::Story => "Story",
+        CityObjectClass::Track => "Track",
+        CityObjectClass::TrafficArea => "TrafficArea",
+        CityObjectClass::TrafficSpace => "TrafficSpace",
+        CityObjectClass::Tunnel => "Tunnel",
+        CityObjectClass::TunnelConstructiveElement => "TunnelConstructiveElement",
+        CityObjectClass::TunnelFurniture => "TunnelFurniture",
+        CityObjectClass::TunnelInstallation => "TunnelInstallation",
+        CityObjectClass::TunnelPart => "TunnelPart",
+        CityObjectClass::WallSurface => "WallSurface",
+        CityObjectClass::WaterBody => "WaterBody",
+        CityObjectClass::WaterGroundSurface => "WaterGroundSurface",
+        CityObjectClass::WaterSurface => "WaterSurface",
+        CityObjectClass::Waterway => "Waterway",
+        CityObjectClass::Window => "Window",
+        CityObjectClass::WindowSurface => "WindowSurface",
     }
 }
+

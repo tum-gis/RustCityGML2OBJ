@@ -1,6 +1,6 @@
 use crate::Args;
 use clap::Parser;
-use egml::model::base::Id;
+use egml::model::base::{Gml, Id};
 use serde::Serialize;
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -9,7 +9,9 @@ use std::path::Path;
 #[derive(Serialize)]
 struct Metadata {
     building_id: String,
-    semantic_surface_id: String,
+    class_gml_id: String,
+    multi_surface_gml_id: String,
+    polygon_gml_id: String,
     thematic_role: String,
     dx: String,
     dy: String,
@@ -24,10 +26,14 @@ pub fn write_json_metadata(
     dx: f64,
     dy: f64,
     dz: f64,
+    gml_id: &Id,
+    stuff_gml_id: &Id,
 ) {
     let metadata = Metadata {
         building_id: building_id.to_string(),
-        semantic_surface_id: semantic_surface_id.to_string(),
+        class_gml_id: gml_id.to_string(),
+        multi_surface_gml_id: stuff_gml_id.to_string(),
+        polygon_gml_id: semantic_surface_id.to_string(),
         thematic_role: thematic_role.to_string(),
         dx: dx.to_string(),
         dy: dy.to_string(),
@@ -35,8 +41,8 @@ pub fn write_json_metadata(
     };
 
     let filename = format!(
-        "{}___{}.json",
-        metadata.building_id, metadata.semantic_surface_id
+        "{}.json",
+        metadata.polygon_gml_id
     );
 
     let file_path = Path::new(output_dir).join(filename);
@@ -69,11 +75,13 @@ pub fn write_obj_file(
     dy: f64,
     dz: f64,
     bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
+    gml_id: &Id,
+    stuff_gml_id: &Id,
 ) {
     let args = Args::parse();
     let building_id_string = building_id.to_string();
     let semantic_surface_string = semantic_surface_id.to_string();
-    let filename = format!("{}___{}.obj", building_id_string, semantic_surface_string);
+    let filename = format!("{}.obj", semantic_surface_string);
 
     let file_path = Path::new(&args.output).join(filename);
 
@@ -148,6 +156,8 @@ pub fn write_obj_file(
             dx,
             dy,
             dz,
+            gml_id,
+            stuff_gml_id,
         );
     }
 }
