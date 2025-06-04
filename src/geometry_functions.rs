@@ -3,7 +3,6 @@ use earcut::Earcut;
 use earcut::utils3d::project3d_to_2d;
 use ecitygml_core::model::building::Building;
 use ecitygml_core::operations::FeatureWithGeometry;
-use egml::model::base::Id;
 use egml::model::geometry::Polygon;
 use egml::operations::geometry::Geometry;
 

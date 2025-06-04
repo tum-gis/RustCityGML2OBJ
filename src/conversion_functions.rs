@@ -7,7 +7,7 @@ use ecitygml_core::operations::{FeatureWithGeometry, Visitable};
 use egml::model::base::Id;
 use egml::model::geometry::{MultiSurface, Polygon};
 use rayon::prelude::*;
-use std::fmt;
+
 
 pub fn collect_building_geometries(
     input_building: &mut Building,

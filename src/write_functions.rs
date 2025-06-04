@@ -1,6 +1,6 @@
 use crate::Args;
 use clap::Parser;
-use egml::model::base::{Gml, Id};
+use egml::model::base::Id;
 use serde::Serialize;
 use std::fs::File;
 use std::io::{BufWriter, Write};
