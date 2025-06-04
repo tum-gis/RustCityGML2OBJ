@@ -8,7 +8,7 @@ Command line converter of **CityGML (.gml)** to **OBJ (.obj)** files. This proje
 
 Please make sure to use the absolute paths to the respective directories.
 
-### :wrench: Detailed Project Description
+### Detailed Project Description
 + Every building will be converted into a set of `.obj` files
 + Every polygon will be triangulated with the [earcut Rust-library](https://github.com/ciscorn/earcut-rs) and will be written into an individual `.obj`
 + Every `.obj` files adheres to the following naming convention: `<gml_id-of-the-building>__<gml_id_of the polygon>.obj`
@@ -18,7 +18,15 @@ Please make sure to use the absolute paths to the respective directories.
 | Optional feature | specification |
 | -------- | -------- |
 | Building-wise translation into local CRS before the triangulation |`--tbw`|
+| Adding small triangular structures indicating the building-wise, axis-aligned bounding box to each of the resulting `.obj` files. |`--add_bb`|
+| For every `.obj` file, write out an additional `.json` file contaiing metadata such as gml_id, thematic role, and the translation parameters that were applied, in case a translation into a local CRS was performed before the triangulation |`--add_json`|
 
+
+### Ongoing Developments
++ extending the functionality to more parts of the CityGML 3.0 data model
++ implementing a functionality to convert the entire building into one single `.obj` file.
++ imorting an external bounding box
+  
 
 ### CityGML Requirements:
 
