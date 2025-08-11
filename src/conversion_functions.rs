@@ -117,7 +117,6 @@ pub fn process_surface_member(
     gml_id: &Id,
     stuff_gml_id: &Id,
 ) {
-    // todo: implement a way to get the thematic info in form of a string
     let thematic_info_string =  city_object_class_to_str(thematic_info);
     let (triangles, all_points) = triangulate(input_surface_member);
     let input_surface_member_id = &input_surface_member.gml.id;
