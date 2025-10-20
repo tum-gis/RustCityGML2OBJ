@@ -42,7 +42,6 @@ pub fn process_wall_surface_sequential(input_wall_surface: &WallSurface) -> Vec<
     let mut all_points: Vec<[f64; 3]> = Vec::new();
     let multi_surfaces = &input_wall_surface.thematic_surface.lod2_multi_surface;
     if let Some(multi_surface) = multi_surfaces {
-        // get the id of the multi surface
         let all_points_tmp = process_multi_surface_sequential(&multi_surface);
         all_points.extend(&all_points_tmp);
     }
