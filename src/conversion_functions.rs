@@ -28,8 +28,9 @@ pub fn collect_building_geometries(
         // todo: Muss noch implementiert werden.
     }
 
-    let building_id = &input_building.city_object.gml.id;
-
+    //let building_id = &input_building.city_object.gml.id;
+    let building_id = &input_building.occupied_space.space.city_object.gml.id;
+    
     // get the translation parameter into a local crs in case it is desired
     let mut dx: f64 = 0.0;
     let mut dy: f64 = 0.0;
