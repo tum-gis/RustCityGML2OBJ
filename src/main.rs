@@ -34,12 +34,20 @@ struct Args {
     /// Option for importing a bounding box instead of creating a new one from the data
     #[arg(long, default_value_t = false)]
     import_bb: bool,
+    
+    /// Option for grouping the polygons by semantic surfaces
+    #[arg(long, default_value_t = false)]
+    group_sc: bool,
 }
 
 fn main() {
     let args = Args::parse();
     println!("Input Directory: {}", args.input);
     println!("Output Directory: {}", args.output);
+    println!("TBW: {}", args.tbw);
+    println!("Add: {}", args.add_json);
+    println!("Import: {}", args.import_bb);
+    println!("Group Sc: {}", args.group_sc);
 
     // Read directory entries
     let input_path = Path::new(&args.input);
@@ -68,6 +76,7 @@ fn main() {
                                 args.add_bb,
                                 args.add_json,
                                 args.import_bb,
+                                args.group_sc,
                             );
                         });
                     }

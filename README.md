@@ -16,15 +16,16 @@ Please make sure to use the absolute paths to the respective directories.
 
 ### :wrench: Optional features
 
-| Optional feature | specification |
-| -------- | -------- |
-| Building-wise translation into local CRS before the triangulation |`--tbw`|
-| Adding small triangular structures indicating the building-wise, axis-aligned bounding box to each of the resulting `.obj` files. |`--add_bb`|
-| For every `.obj` file, write out an additional `.json` file contaiing metadata such as gml_id, thematic role, and the translation parameters that were applied, in case a translation into a local CRS was performed before the triangulation |`--add_json`|
-
+| Optional feature                                                                                                                                                                                                                              | specification |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|
+| Building-wise translation into local CRS before the triangulation                                                                                                                                                                             | `--tbw`    |
+| Adding small triangular structures indicating the building-wise, axis-aligned bounding box to each of the resulting `.obj` files.                                                                                                             | `--add_bb` |
+| For every `.obj` file, write out an additional `.json` file contaiing metadata such as gml_id, thematic role, and the translation parameters that were applied, in case a translation into a local CRS was performed before the triangulation | `--add-json` |
+| Grouping of the output by semantic role (e.g. wallSurfaces or roofSurfaces) into combined `.obj` files.                                                                                                                                       |`--group-sc` |
 
 ### Ongoing Developments
 + extending the functionality to more parts of the CityGML 3.0 data model
++ implementing a functionality to convert every thematic surface into one single `.obj` file.
 + implementing a functionality to convert the entire building into one single `.obj` file.
 + imorting an external bounding box
   
