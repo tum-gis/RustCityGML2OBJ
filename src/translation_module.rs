@@ -8,8 +8,7 @@ pub fn process_building_components_sequential(input_building: &Building) -> Vec<
     let mut all_wall_points: Vec<[f64; 3]> = Vec::new();
     let mut all_roof_points: Vec<[f64; 3]> = Vec::new();
     let mut all_ground_points: Vec<[f64; 3]> = Vec::new();
-    // get the translation parameter into a local crs in case it is desired
-
+    
     // Obtain the building id
     let all_wall_surface = &input_building.wall_surface;
     for wall_surface in all_wall_surface {
