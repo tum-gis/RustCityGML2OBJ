@@ -1,4 +1,5 @@
 use crate::geometry_functions::{construct_buffered_bounding_box, triangulate};
+use crate::write_functions;
 use crate::write_functions::write_obj_file;
 use ecitygml::operations::GeometryCollector;
 use ecitygml_core::model::building::Building;
@@ -6,10 +7,10 @@ use ecitygml_core::model::common::{CityObjectClass, LevelOfDetail};
 use ecitygml_core::operations::{FeatureWithGeometry, Visitable};
 use egml::model::base::Id;
 use egml::model::geometry::{MultiSurface, Polygon};
+use egml::operations::triangulate::Triangulate;
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use egml::operations::triangulate::Triangulate;
 
 // Helper container that stores all vertices and triangles that belong to one
 // semantic surface class (e.g. WallSurface, RoofSurface, …).
@@ -17,6 +18,7 @@ use egml::operations::triangulate::Triangulate;
 struct SurfaceGroup {
     vertices: Vec<[f64; 3]>,
     triangles: Vec<u32>,
+    class_name: Option<String>,
 }
 
 pub fn collect_building_geometries(
@@ -26,28 +28,26 @@ pub fn collect_building_geometries(
     add_json: bool,
     import_bb: bool,
     group_by_surface: bool,
+    group_by_semantic_surface: bool,
 ) {
-     // Initialize an empty bounding box
+    // Initialize an empty bounding box
     let mut bbox = (Vec::new(), Vec::new());
 
     // Distinguish the different cases of the bounding box
     if add_bb {
-        // Calculate the bounding box and add little pyramids in the corners
         bbox = construct_buffered_bounding_box(input_building);
     } else if import_bb {
         // Import the bounding box from an external file
         // todo: Muss noch implementiert werden.
     }
 
-    //let building_id = &input_building.city_object.gml.id;
     let building_id = &input_building.occupied_space.space.city_object.gml.id;
-    
+
     // get the translation parameter into a local crs in case it is desired
     let mut dx: f64 = 0.0;
     let mut dy: f64 = 0.0;
     let mut dz: f64 = 0.0;
     if tbw {
-        // Calculate the envelope of the building and get the tranformation parameters from it
         if let Some(envelope) = input_building.envelope() {
             let upper_corner = envelope.upper_corner();
             let lower_corner = envelope.lower_corner();
@@ -62,29 +62,30 @@ pub fn collect_building_geometries(
     let mut collector_1 = GeometryCollector::new();
     input_building.accept(&mut collector_1);
 
-    // Prepare optional shared accumulator when grouping option is invoked
-    let groups: Option<Arc<Mutex<HashMap<String, SurfaceGroup>>>> = if group_by_surface {
+    // Prepare optional shared accumulators
+    let groups_by_class: Option<Arc<Mutex<HashMap<String, SurfaceGroup>>>> = if group_by_surface {
         Some(Arc::new(Mutex::new(HashMap::new())))
     } else {
         None
     };
 
-    // Assuming collector_1.city_objects is a Vec or similar iterable
+    let groups_by_semantic_surface: Option<Arc<Mutex<HashMap<String, SurfaceGroup>>>> =
+        if group_by_semantic_surface {
+            Some(Arc::new(Mutex::new(HashMap::new())))
+        } else {
+            None
+        };
+
     collector_1
         .city_objects
         .par_iter()
         .for_each(|collected_geometry| {
-            // Obtain all the different data
             let gml_id = &collected_geometry.1.gml.id;
             let class = collected_geometry.1.class;
-            let implicit_geometries = &collected_geometry.1.implicit_geometries;
             let multi_surfaces = &collected_geometry.1.multi_surfaces;
-            let solids = &collected_geometry.1.solids;
 
-            // The textual representation of the class (e.g. "WallSurface")
             let class_key = city_object_class_to_str(class).to_owned();
-            
-            // Process the MultiSurfaces
+
             for multi_surface in multi_surfaces {
                 process_multi_surface(
                     &multi_surface,
@@ -95,13 +96,15 @@ pub fn collect_building_geometries(
                     dz,
                     &bbox,
                     gml_id,
-                    groups.clone(),          // ← optional shared map
-                    class_key.clone(),       // ← semantic key for grouping
+                    groups_by_class.clone(),
+                    groups_by_semantic_surface.clone(),
+                    class_key.clone(),
                 );
             }
         });
-    if let Some(groups_arc) = groups {
-        // No other thread holds the Arc at this point → we can unwrap it safely
+
+    //  Write grouped OBJ files (semantic class level)
+    if let Some(groups_arc) = groups_by_class {
         let map = Arc::try_unwrap(groups_arc)
             .expect("Unexpected Arc reference count")
             .into_inner()
@@ -110,24 +113,46 @@ pub fn collect_building_geometries(
         for (class_key, group) in map {
             let filename = format!("{}_{}.obj", building_id, class_key);
 
-            // We reuse `write_obj_file` – it derives the final file name from the
-            // supplied IDs, so we create a temporary `Id` that contains the
-            // desired filename.
             write_obj_file(
                 group.vertices,
                 group.triangles,
                 building_id,
-                &Id::from_hashed_string(&filename),        // temporary ID used only for naming
-                &class_key,         // thematic info (same as class name)
+                write_functions::SemanticSurfaceId::Str(&filename),
+                &class_key,
                 dx,
                 dy,
                 dz,
                 &bbox,
-                &Id::from_hashed_string("grouped"), // dummy multi‑surface ID
+                &Id::from_hashed_string("grouped"),
                 &Id::from_hashed_string("grouped"),
             );
+        }
+    }
 
-            println!("✔️  Wrote grouped OBJ for {} → {}", class_key, filename);
+    // Write grouped OBJ files (semantic surface level)
+    if let Some(groups_arc) = groups_by_semantic_surface {
+        let map = Arc::try_unwrap(groups_arc)
+            .expect("Unexpected Arc reference count")
+            .into_inner()
+            .unwrap();
+
+        for (surface_id, group) in map {
+            let class_name = group.class_name.as_deref().unwrap_or("UnknownSurface");
+            let filename = format!("{}_{}_{}", building_id, class_name, surface_id);
+            println!("filename {}", class_name);
+            write_obj_file(
+                group.vertices,
+                group.triangles,
+                building_id,
+                write_functions::SemanticSurfaceId::Str(&filename),
+                &class_name,
+                dx,
+                dy,
+                dz,
+                &bbox,
+                &Id::from_hashed_string("grouped"),
+                &Id::from_hashed_string(&filename),
+            );
         }
     }
 
@@ -145,8 +170,9 @@ pub fn process_multi_surface(
     dz: f64,
     bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
     gml_id: &Id,
-    groups: Option<Arc<Mutex<HashMap<String, SurfaceGroup>>>>, // ← NEW
-    class_key: String,                                          // ← NEW
+    groups_by_class: Option<Arc<Mutex<HashMap<String, SurfaceGroup>>>>,
+    groups_by_semantic_surface: Option<Arc<Mutex<HashMap<String, SurfaceGroup>>>>,
+    class_key: String,
 ) {
     let stuffs = &input_multi_surface.1.surface_member();
     let stuff_gml_id = &input_multi_surface.1.gml.id;
@@ -162,12 +188,11 @@ pub fn process_multi_surface(
             bbox,
             gml_id,
             class_key.clone(),
-            groups.clone(),
-            
+            groups_by_class.clone(),
+            groups_by_semantic_surface.clone(),
         );
     });
 }
-    
 
 pub fn process_surface_member(
     input_surface_member: &Polygon,
@@ -179,40 +204,55 @@ pub fn process_surface_member(
     dz: f64,
     bbox: &(Vec<[f64; 3]>, Vec<[u64; 3]>),
     gml_id: &Id,
-    class_key: String, // ← semantic class name (used as map key)
-    groups: Option<Arc<Mutex<HashMap<String, SurfaceGroup>>>>, // ← optional map
+    class_key: String,
+    groups_by_class: Option<Arc<Mutex<HashMap<String, SurfaceGroup>>>>,
+    groups_by_semantic_surface: Option<Arc<Mutex<HashMap<String, SurfaceGroup>>>>,
 ) {
     let (triangles, all_points) = triangulate(input_surface_member);
     let surface_id = input_surface_member.gml.id.clone();
 
-    if let Some(groups_arc) = groups {
-        // -------------------------- GROUPED MODE ---------------------------
+    // Semantic surface grouping
+    if let Some(groups_arc) = groups_by_semantic_surface {
         let mut map = groups_arc.lock().unwrap();
 
-        // Get (or create) the buffer that belongs to this semantic class
-        let bucket = map.entry(class_key).or_default();
+        // Create or fetch the group for this semantic surface
+        let bucket = map.entry(surface_id.to_string()).or_insert_with(|| {
+            let mut g = SurfaceGroup::default();
+            g.class_name = Some(class_key.clone());
+            g
+        });
 
-        // OBJ indices are 1‑based – keep a running offset for this bucket
         let vertex_offset = bucket.vertices.len() as u32;
-
-        // Store the vertices
         bucket.vertices.extend_from_slice(&all_points);
 
-        // Shift the triangle indices so they refer to the global vertex list
-        // of this bucket and store them.
         let shifted: Vec<u32> = triangles
             .into_iter()
-            .map(|idx| idx + vertex_offset)   // add the offset to every index
+            .map(|idx| idx + vertex_offset)
             .collect();
         bucket.triangles.extend(shifted);
-    } else {
-        // -------------------------- LEGACY MODE ---------------------------
+    }
+    // Existing: semantic class grouping
+    else if let Some(groups_arc) = groups_by_class {
+        let mut map = groups_arc.lock().unwrap();
+        let bucket = map.entry(class_key).or_default();
+
+        let vertex_offset = bucket.vertices.len() as u32;
+        bucket.vertices.extend_from_slice(&all_points);
+
+        let shifted: Vec<u32> = triangles
+            .into_iter()
+            .map(|idx| idx + vertex_offset)
+            .collect();
+        bucket.triangles.extend(shifted);
+    }
+    // per-polygon output
+    else {
         let thematic_info_string = city_object_class_to_str(thematic_info);
         write_obj_file(
             all_points,
             triangles,
             building_id,
-            &surface_id,
+            write_functions::SemanticSurfaceId::Id(&surface_id),
             &thematic_info_string,
             dx,
             dy,
@@ -287,4 +327,3 @@ pub fn city_object_class_to_str(class: CityObjectClass) -> &'static str {
         CityObjectClass::WindowSurface => "WindowSurface",
     }
 }
-

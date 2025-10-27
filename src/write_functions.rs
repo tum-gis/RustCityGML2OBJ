@@ -6,6 +6,23 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
+#[derive(Debug)]
+pub enum SemanticSurfaceId<'a> {
+    Id(&'a Id),
+    Str(&'a str),
+    None,
+}
+
+impl<'a> ToString for SemanticSurfaceId<'a> {
+    fn to_string(&self) -> String {
+        match self {
+            SemanticSurfaceId::Id(id) => id.to_string(),
+            SemanticSurfaceId::Str(s) => s.to_string(),
+            SemanticSurfaceId::None => String::new(),
+        }
+    }
+}
+
 #[derive(Serialize)]
 struct Metadata {
     building_id: String,
@@ -20,7 +37,7 @@ struct Metadata {
 
 pub fn write_json_metadata(
     building_id: &Id,
-    semantic_surface_id: &Id,
+    semantic_surface_id: SemanticSurfaceId,
     thematic_role: &str,
     output_dir: &str,
     dx: f64,
@@ -29,21 +46,31 @@ pub fn write_json_metadata(
     gml_id: &Id,
     stuff_gml_id: &Id,
 ) {
+    let mut semantic_surface_string: String = "default".to_string();
+
+    match semantic_surface_id {
+        SemanticSurfaceId::Id(id) => {
+            semantic_surface_string = semantic_surface_id.to_string();
+        }
+        SemanticSurfaceId::Str(s) => {
+            semantic_surface_string = semantic_surface_id.to_string();
+        }
+        SemanticSurfaceId::None => {
+            semantic_surface_string = "No_semantic_surface_sting_found".to_string();
+        }
+    }
     let metadata = Metadata {
         building_id: building_id.to_string(),
         class_gml_id: gml_id.to_string(),
         multi_surface_gml_id: stuff_gml_id.to_string(),
-        polygon_gml_id: semantic_surface_id.to_string(),
+        polygon_gml_id: semantic_surface_string,
         thematic_role: thematic_role.to_string(),
         dx: dx.to_string(),
         dy: dy.to_string(),
         dz: dz.to_string(),
     };
 
-    let filename = format!(
-        "{}.json",
-        metadata.polygon_gml_id
-    );
+    let filename = format!("{}.json", metadata.polygon_gml_id);
 
     let file_path = Path::new(output_dir).join(filename);
 
@@ -69,7 +96,7 @@ pub fn write_obj_file(
     input_points: Vec<[f64; 3]>,
     triangles: Vec<u32>,
     building_id: &Id,
-    semantic_surface_id: &Id,
+    semantic_surface_id: SemanticSurfaceId,
     thematic_role: &str,
     dx: f64,
     dy: f64,
@@ -80,9 +107,21 @@ pub fn write_obj_file(
 ) {
     let args = Args::parse();
     let building_id_string = building_id.to_string();
-    let semantic_surface_string = semantic_surface_id.to_string();
-    let filename = format!("{}.obj", semantic_surface_string);
+    let mut semantic_surface_string: String = "default".to_string();
 
+    match semantic_surface_id {
+        SemanticSurfaceId::Id(id) => {
+            semantic_surface_string = semantic_surface_id.to_string();
+        }
+        SemanticSurfaceId::Str(s) => {
+            semantic_surface_string = semantic_surface_id.to_string();
+        }
+        SemanticSurfaceId::None => {
+            semantic_surface_string = "No_semantic_surface_sting_found".to_string();
+        }
+    }
+
+    let filename = format!("{}.obj", semantic_surface_string);
     let file_path = Path::new(&args.output).join(filename);
 
     let file = match File::create(&file_path) {
@@ -95,7 +134,7 @@ pub fn write_obj_file(
 
     let mut writer = BufWriter::new(file);
 
-    // --- Write main geometry vertices ---
+    // Write main geometry vertices
     for point in &input_points {
         if let Err(e) = writeln!(writer, "v {} {} {}", point[0], point[1], point[2]) {
             eprintln!("Failed to write vertex: {}", e);
@@ -105,7 +144,7 @@ pub fn write_obj_file(
 
     let base_vertex_count = input_points.len();
 
-    // --- Write triangle faces ---
+    // Write triangle faces
     if triangles.len() % 3 != 0 {
         eprintln!("Triangle index list is not a multiple of 3.");
         return;
@@ -119,7 +158,7 @@ pub fn write_obj_file(
     }
 
     if args.add_bb {
-        // --- Write bounding box vertices ---
+        // Write bounding box vertices
         let (bbox_vertices, bbox_triangles) = bbox;
         for point in bbox_vertices {
             if let Err(e) = writeln!(writer, "v {} {} {}", point[0], point[1], point[2]) {
@@ -128,11 +167,9 @@ pub fn write_obj_file(
             }
         }
 
-        // --- Write bounding box lines (edges) ---
-        // offset index by input_points.len(), because OBJ indices are 1-based
-
+        // Write bounding box edges
         let bbox_vertex_offset = base_vertex_count;
-        // --- Write bounding box faces (triangles) ---
+        // Write bounding box triangles
         for face in bbox_triangles {
             if let Err(e) = writeln!(
                 writer,

@@ -11,43 +11,48 @@ use std::path::Path;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Input file path
+    // Input file path
     #[arg(short, long)]
     input: String,
 
-    /// Output directory
+    // Output directory
     #[arg(short, long)]
     output: String,
 
-    /// Option for invoking building-wise translation into local CRS
+    // Option for invoking building-wise translation into local CRS
     #[arg(long, default_value_t = false)]
     tbw: bool,
 
-    /// Option for additionally writing out a json file containing metadata
+    // Option for additionally writing out a json file containing metadata
     #[arg(long, default_value_t = false)]
     add_json: bool,
 
-    /// Option for adding the bounding box to the obj files
+    // Option for adding the bounding box to the obj files
     #[arg(long, default_value_t = false)]
     add_bb: bool,
 
-    /// Option for importing a bounding box instead of creating a new one from the data
+    // Option for importing a bounding box instead of creating a new one from the data
     #[arg(long, default_value_t = false)]
     import_bb: bool,
-    
-    /// Option for grouping the polygons by semantic surfaces
+
+    // Option for grouping the polygons by semantic surfaces
     #[arg(long, default_value_t = false)]
     group_sc: bool,
+
+    // Option for grouping the polygons by semantic surfaces
+    #[arg(long, default_value_t = false)]
+    group_scomp: bool,
 }
 
 fn main() {
     let args = Args::parse();
     println!("Input Directory: {}", args.input);
     println!("Output Directory: {}", args.output);
-    println!("TBW: {}", args.tbw);
-    println!("Add: {}", args.add_json);
-    println!("Import: {}", args.import_bb);
-    println!("Group Sc: {}", args.group_sc);
+    println!("translate buildings into local crs: {}", args.tbw);
+    println!("add bounding box: {}", args.add_json);
+    println!("import bounding box: {}", args.import_bb);
+    println!("group output by semantic class: {}", args.group_sc);
+    println!("group output by semantic component: {}", args.group_scomp);
 
     // Read directory entries
     let input_path = Path::new(&args.input);
@@ -77,6 +82,7 @@ fn main() {
                                 args.add_json,
                                 args.import_bb,
                                 args.group_sc,
+                                args.group_scomp,
                             );
                         });
                     }
